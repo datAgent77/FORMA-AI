@@ -1,0 +1,9 @@
+{
+  "name": "Forma.Storage",
+  "rootNamespace": "Forma.Storage",
+  "references": [
+    "Forma.Product",
+    "Forma.Domain"
+  ],
+  "noEngineReferences": true
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Forma.Product",
+  "rootNamespace": "Forma.Product",
+  "references": [
+    "Forma.Domain"
+  ],
+  "noEngineReferences": true
+}

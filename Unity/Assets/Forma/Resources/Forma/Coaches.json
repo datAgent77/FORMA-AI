@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "coaches": [
+    {
+      "id": "sol",
+      "displayName": "Sol",
+      "avatarAsset": "procedural:forma-guide-v1",
+      "voiceReference": "text-only",
+      "animationConfiguration": "gentle-v1",
+      "personality": 0,
+      "languages": [
+        "en",
+        "tr"
+      ],
+      "supportedModes": [
+        "Studio"
+      ],
+      "primaryColor": "#217C83",
+      "accentColor": "#E6BA75"
+    },
+    {
+      "id": "mira",
+      "displayName": "Mira",
+      "avatarAsset": "procedural:forma-guide-v1",
+      "voiceReference": "text-only",
+      "animationConfiguration": "gentle-v1",
+      "personality": 1,
+      "languages": [
+        "en",
+        "tr"
+      ],
+      "supportedModes": [
+        "Studio"
+      ],
+      "primaryColor": "#4F617C",
+      "accentColor": "#BFDAD3"
+    },
+    {
+      "id": "atlas",
+      "displayName": "Atlas",
+      "avatarAsset": "procedural:forma-guide-v1",
+      "voiceReference": "text-only",
+      "animationConfiguration": "gentle-v1",
+      "personality": 2,
+      "languages": [
+        "en",
+        "tr"
+      ],
+      "supportedModes": [
+        "Studio"
+      ],
+      "primaryColor": "#6A577D",
+      "accentColor": "#C7D9E8"
+    }
+  ]
+}

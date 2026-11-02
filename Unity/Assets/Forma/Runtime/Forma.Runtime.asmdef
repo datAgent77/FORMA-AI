@@ -2,6 +2,8 @@
   "name": "Forma.Runtime",
   "rootNamespace": "Forma.Runtime",
   "references": [
-    "Forma.Domain"
+    "Forma.Domain",
+    "Forma.Product",
+    "Forma.Storage"
   ]
 }

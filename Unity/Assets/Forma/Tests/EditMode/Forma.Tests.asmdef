@@ -2,7 +2,9 @@
   "name": "Forma.Tests",
   "references": [
     "Forma.Domain",
-    "Forma.Runtime"
+    "Forma.Runtime",
+    "Forma.Product",
+    "Forma.Storage"
   ],
   "includePlatforms": [
     "Editor"

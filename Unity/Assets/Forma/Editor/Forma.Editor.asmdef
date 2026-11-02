@@ -2,7 +2,9 @@
   "name": "Forma.Editor",
   "references": [
     "Forma.Runtime",
-    "Forma.Domain"
+    "Forma.Domain",
+    "Forma.Product",
+    "Forma.Storage"
   ],
   "includePlatforms": [
     "Editor"
