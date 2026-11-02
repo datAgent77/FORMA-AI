@@ -51,3 +51,15 @@ Never record a successful APK build unless the Editor returns success and the ou
 
 ## CI
 The included workflow compiles/runs only the linked pure C# domain harness on .NET 8 and checks repository invariants. It needs no Unity license or Meta authentication. Unity EditMode/Android CI must be enabled only after committing the real generated project and resolved dependency lock, provisioning a legitimate Unity license, and confirming whether Meta packages may be restored in that CI environment under their terms. Use `tools/test-unity.sh` on that runner and upload the XML/log artifacts; device acceptance remains a separate manual gate. No fake green Unity-build CI job is supplied.
+
+## Phase 2 A/B scene integration
+Newly generated Preview/Quest scenes also compose OnboardingController, SetupPanel and the three bundled coach presets. Existing scenes are never overwritten: retain the old scene for Phase 1 comparison, rename/archive it explicitly, then generate a new scene through the actual Editor. Keep the Built-in render pipeline; no new package is needed by the setup UI.
+
+Run EditMode tests (including UnityProfileCodec) and then the new PlayMode spatial-panel smoke test:
+```sh
+UNITY_EDITOR='/path/to/Unity.app/Contents/MacOS/Unity' bash tools/test-unity.sh
+UNITY_EDITOR='/path/to/Unity.app/Contents/MacOS/Unity' UNITY_TEST_PLATFORM=PlayMode bash tools/test-unity.sh
+```
+The PlayMode test uses actual Unity rendering/physics components, not headset simulation; it still does not verify Quest compositor behavior or comfort. Validate both generated scenes manually. Test first launch, all optional fields skipped, Turkish glyphs, three looks/styles, seated restrictions, no-compatible-workout behavior, mute/volume, reduced idle motion, manual placement, failed saves, reset, profile-only export, complete local deletion, returning users and focus loss on every setup step. Physical-space confirmation must not survive interruption or authorize a future workout.
+
+Local profile export path: `Application.persistentDataPath/forma-exports/setup-profile.json`. On development devices use the actual Android sandbox path exposed by the development build and authorized ADB access; no consumer share picker is claimed. Source-side requested SDK pins remain unchanged and unresolved; do not infer an installed package from this update.

@@ -6,6 +6,11 @@ Phase 0/1 source foundation for an offline, mixed-reality fitness studio on Meta
 ## Status — read first
 Unity is not installed on the authoring host. This repository contains authored C# source, a real-Editor scene builder, tests, and setup/build instructions. **It is not yet an Editor-generated Unity project, a compiled Unity application, or a hardware-validated experience.** No `.unity`, `.meta`, ProjectSettings, package lockfiles or APKs have been fabricated. The definition of success remains unverified until the Quest acceptance checklist passes.
 
+## Phase 2 A/B additions
+Offline first-use setup now has authored Unity presentation and tested product rules: EN/TR setup, original Sol/Mira/Atlas development coach presets, appearance/personality selection, optional fitness preferences, seated filtering, safety acknowledgement and versioned local profile save/export/reset. No new dependencies were installed. Hands, voice, production character art and Unity/device validation remain outstanding. Phase 1 workout cues stay English, as disclosed during setup.
+
+See [Phase 2 delivery](docs/phase2/DELIVERY.md), [architecture](docs/phase2/ARCHITECTURE.md), [UX](docs/phase2/UX.md), [privacy](docs/phase2/PRIVACY.md) and [store readiness](docs/phase2/STORE-READINESS.md). Milestone C and later runtime work are gated on A/B acceptance.
+
 ## Start here
 1. Follow [Unity and dependency setup](docs/SETUP.md). Unity itself generates the project metadata.
 2. Use `FORMA > Create Desktop Preview Scene` for a desktop logic/UI preview.
@@ -27,6 +32,8 @@ AGENTS.md                    Engineering constraints
 config/packages.required.json Reviewed dependency requests; not a resolved manifest
 Unity/Assets/Forma/
   Domain/                    Pure C# workout, coach, safety and contracts
+  Product/                   Pure C# profile, onboarding, catalog and service contracts
+  Storage/                   Codec-injected product profile file repository
   Runtime/                   Presentation, input, composition and local persistence
   Integrations/Meta/         Isolated SDK adapter, opt-in compilation
   Editor/                    Scene generator and Android build command
@@ -43,12 +50,13 @@ docs/                       Architecture, setup, safety and validation
 ## Test without Unity
 Install .NET 8, then run:
 ```sh
-dotnet run --projecttests/DomainHarness/DomainHarness.csproj --configuration Release
-python3tools/validate-source.py
+dotnet run --project tests/DomainHarness/DomainHarness.csproj --configuration Release
+dotnet run --project tests/ProductHarness/ProductHarness.csproj --configuration Release
+python3 tools/validate-source.py
 ```
 See [the validation report](docs/VALIDATION.md) for what was actually executed here. Unity tests and device builds are separate checks.
 
 ## Boundaries
 No medical benefit, calorie, full-body tracking or automatic form-correction claims. No model calls, remote services, passthrough camera access, equipment tracking, Worlds or Mirror implementation. The avatar is a stylized guide with text cues; it is not a validated biomechanics demonstration. No audio or speech synthesis in Phase 1. See [safety](docs/SAFETY.md), [architecture](docs/ARCHITECTURE.md) and [third-party dependencies](THIRD_PARTY_NOTICES.md).
 
-Original project source is not assigned a public redistribution license here; the owner must choose one before external distribution. Proprietary SDKs and Unity retain their own terms. No repository has been published or pushed remotely.
+Original project source is not assigned a public redistribution license here; the owner must choose one before external distribution. Proprietary SDKs and Unity retain their own terms. Repository: [datAgent77/FORMA-AI](https://github.com/datAgent77/FORMA-AI). Phase 2 work remains on a feature branch; no automatic merge.

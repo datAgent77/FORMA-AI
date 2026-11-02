@@ -10,3 +10,5 @@ No Unity editor binaries, Meta SDK binaries, proprietary avatar assets or paid c
 - **GitHub Actions checkout/setup-dotnet**: CI tooling, not device runtime dependencies. Pin reviewed action commit SHAs before enabling CI in an organization with supply-chain requirements; major-version tags here are initial configuration.
 
 After actual Editor import, inventory the generated package lock and copy/package required notices according to each dependency's terms. This is a dependency disclosure, not a legal clearance or a substitute for the installed license text. Original FORMA code has no public redistribution grant until the owner selects one.
+
+Phase 2 A/B adds no SDK, third-party model, font download or audio dependency. Original coach definitions/procedural development appearances are documented in `Unity/Assets/Forma/Resources/Forma/README.md`. Built-in Unity primitives and LegacyRuntime font remain subject to Unity's applicable runtime distribution terms. No celebrity voice/likeness is used.

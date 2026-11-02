@@ -1,5 +1,7 @@
 # FORMA Studio architecture
 
+Phase 2 A/B additions are documented in [the product architecture](phase2/ARCHITECTURE.md). The following describes the preserved Phase 1 engine and its original constraints.
+
 ## Scope and requirements
 Phase 1 is an offline, single-user MR scene. A session must progress deterministically without cloud access. Rendering, headset tracking and avatar animation must not own workout time or transition rules. Quest 3 and 3S are target devices, not validated devices. No exercise uses equipment or requires precise tracking of limbs. All future modules remain contracts.
 

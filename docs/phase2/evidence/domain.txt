@@ -1,0 +1,33 @@
+CSSM_ModuleLoad(): One or more parameters passed to a function were not valid.
+PASS unsafe start denied
+PASS start is single-use
+PASS introduction countdown
+PASS intro enters work
+PASS pause freezes time
+PASS resume needs safety
+PASS work enters rest
+PASS rest advances set
+PASS exercise rollover
+PASS complete exact workout
+PASS terminal state is stable
+PASS overshoot stops at completion
+PASS abort paused session
+PASS zero rest cannot stall
+PASS reject NaN clock
+PASS reject invalid clock -1
+PASS reject invalid clock ∞
+PASS reject invalid clock -∞
+PASS reject empty selection
+PASS safety all ready
+PASS passthrough required
+PASS tracking required
+PASS focus required
+PASS physical confirmation required
+PASS coach ready
+PASS coach introduction
+PASS coach guidance
+PASS coach rest
+PASS coach pause
+PASS coach celebrates
+PASS single selected exercise
+31 domain assertions passed.
