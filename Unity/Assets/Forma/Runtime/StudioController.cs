@@ -2,18 +2,42 @@ using System;
 using System.IO;
 using System.Text;
 using Forma.Domain;
+using Forma.Product;
+using System.Collections.Generic;
 using UnityEngine;
 namespace Forma.Runtime
 {
     public sealed class StudioController : MonoBehaviour
     {
         public StudioPlatform platform;
+        public OnboardingController onboarding;
+        ProductProfile productProfile;
+        WorkoutPlan compatiblePlan;
+        bool workoutAvailable=true;
+        public bool CanEditPreferences => workout!=null && Editable;
+        public bool ExitAwaitingConfirmation => exitPending;
+        public void RequestExit()=>Exit();
+        public void ShowProductNotice(string text){message=text;}
+        public void InvalidateSpaceConfirmation(){safety.EnvironmentConfirmed=false;}
+        public void ConfigureCoach(CoachDefinition appearance,PersonalityStyle style){policy=new ConfiguredOfflineCoach(appearance,style);}
+        public void ApplyProductProfile(ProductProfile value)
+        {
+            productProfile=value.Copy();
+            compatiblePlan=new OfflineWorkoutRecommendations(new BeginnerWorkoutValidator()).Recommend(productProfile);
+            if(workout!=null && Editable)
+            {
+                // Preserve a terminal record before replacing its machine for new preferences.
+                if(record!=null && !Persist())return;
+                record=null;CreateWorkout();
+            }
+            InvalidateSpaceConfirmation();
+        }
         public CoachAvatar avatar;
         public TextMesh status,coach,history,summary;
         public StudioButton marchButton,shoulderButton,confirmButton,startButton,pauseButton,endButton,exitButton;
         public StudioButton repsButton,weightButton,entryExerciseButton,deleteButton;
         readonly SafetyGate safety=new SafetyGate();
-        readonly ICoachPolicy policy=new DeterministicCoach();
+        ICoachPolicy policy=new DeterministicCoach();
         LocalStore store;
         LocalProfile profile;
         WorkoutMachine workout;
@@ -42,24 +66,50 @@ namespace Forma.Runtime
             RefreshHistory();
         }
         bool Editable => workout.State==WorkoutState.Ready || workout.State==WorkoutState.Completed || workout.State==WorkoutState.Aborted;
+        bool Allowed(string id)
+        {
+            if(productProfile==null)return true;
+            if(compatiblePlan==null)return false;
+            foreach(var e in compatiblePlan.Exercises)if(e.Id==id)return true;
+            return false;
+        }
         void CreateWorkout()
         {
-            // At least one exercise always selected.
-            if (!profile.selectMarch && !profile.selectShoulders) profile.selectMarch=true;
-            workout=new WorkoutMachine(StarterWorkouts.Create(profile.selectMarch,profile.selectShoulders));
+            if(productProfile==null)
+            {
+                if(!profile.selectMarch && !profile.selectShoulders)profile.selectMarch=true;
+                workout=new WorkoutMachine(StarterWorkouts.Create(profile.selectMarch,profile.selectShoulders));
+                return;
+            }
+            workoutAvailable=compatiblePlan!=null;
+            if(!workoutAvailable)
+            {
+                // Inert Ready machine only, never startable; preserve old view references.
+                workout=new WorkoutMachine(StarterWorkouts.Create(false,true));return;
+            }
+            profile.selectMarch &= Allowed("march");profile.selectShoulders &= Allowed("shoulders");
+            if(!profile.selectMarch && !profile.selectShoulders)
+            { profile.selectMarch=Allowed("march");profile.selectShoulders=Allowed("shoulders"); }
+            var chosen=new List<Exercise>();
+            foreach(var e in compatiblePlan.Exercises)
+                if(e.Id=="march"?profile.selectMarch:profile.selectShoulders)chosen.Add(e);
+            workout=new WorkoutMachine(new WorkoutPlan(compatiblePlan.Id,chosen));
         }
         void Select(bool march)
         {
             if (!Editable) return;
+            if (!Allowed(march?"march":"shoulders")){message="That movement is excluded by your setup preferences.";return;}
             if (record!=null && !Persist()) return;
             if (march) profile.selectMarch=!profile.selectMarch; else profile.selectShoulders=!profile.selectShoulders;
-            if (!profile.selectMarch && !profile.selectShoulders) { if (march) profile.selectShoulders=true; else profile.selectMarch=true; }
+            if (!profile.selectMarch && !profile.selectShoulders) { if (march && Allowed("shoulders")) profile.selectShoulders=true; else if (!march && Allowed("march")) profile.selectMarch=true; else { if(march)profile.selectMarch=true;else profile.selectShoulders=true; } }
             CreateWorkout(); record=null;
             try { store.SaveProfile(profile); } catch (Exception e) when (StorageError(e)) { message="Could not save exercise preferences."; }
         }
         void StartWorkout()
         {
             if (!Editable) return;
+            if(onboarding!=null && !onboarding.ReadyForWorkout){message="Finish setup before starting a workout.";return;}
+            if(!workoutAvailable){message="No compatible starter session. Edit movement preferences; no workout has started.";return;}
             UpdateSafety();
             if (!safety.CanExercise) { message="Check passthrough, tracking and your clear space before starting."; return; }
             if (record!=null && !Persist()) return;
@@ -73,6 +123,7 @@ namespace Forma.Runtime
         public void Pause()
         {
             if (workout==null) return;
+            onboarding?.SuspendSetup();
             workout.Pause(); safety.EnvironmentConfirmed=false;
             Persist();
         }
@@ -111,7 +162,8 @@ namespace Forma.Runtime
             string preview=Application.isEditor?"EDITOR PREVIEW - no physical passthrough\n":"";
             status.text=preview+"FORMA STUDIO  /  "+workout.State+"\n"+workout.Current.Name+"  |  Set "+workout.SetNumber+"/"+workout.Current.Sets+
                 "  |  "+Math.Ceiling(workout.Remaining)+"s\n"+"Work time: "+Math.Floor(workout.ActiveSeconds)+"s  /  Sets finished: "+workout.CompletedSets+
-                "\nPassthrough: "+safety.PassthroughReady+"  Tracking: "+safety.TrackingReady+"\n"+message;
+                "\n"+message;
+            if(!workoutAvailable)status.text="No compatible starter session.\nEdit movement preferences before starting.\n"+message;
             marchButton.Label.text=(profile.selectMarch?"[x] ":"[ ] ")+"Gentle march";
             shoulderButton.Label.text=(profile.selectShoulders?"[x] ":"[ ] ")+"Shoulder rolls";
             confirmButton.Label.text=safety.EnvironmentConfirmed?"[x] Space clear / surroundings visible":"Confirm: space clear / surroundings visible";
@@ -166,7 +218,9 @@ namespace Forma.Runtime
         {
             if (!Editable) { message="End the session before deleting history."; return; }
             if (!deletePending) { deletePending=true; return; }
-            try { store.DeleteAll(); record=null; profile=new LocalProfile(); CreateWorkout(); deletePending=false; RefreshHistory(); message="Local profile and history deleted."; }
+            try { store.DeleteAll(); onboarding?.DeleteProductProfile();
+                string exports=Path.Combine(Application.persistentDataPath,"forma-exports");if(Directory.Exists(exports))Directory.Delete(exports,true);
+                record=null;productProfile=null;compatiblePlan=null;workoutAvailable=true; profile=new LocalProfile(); CreateWorkout(); deletePending=false; RefreshHistory(); message="Local profile and history deleted."; }
             catch(Exception e) when(StorageError(e)) { message="Could not delete local data."; }
         }
         void Exit()

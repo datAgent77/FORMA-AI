@@ -7,12 +7,13 @@ namespace Forma.Runtime
     {
         public StudioController controller;
         public Camera view;
+        static readonly XRNode[] Hands={XRNode.LeftHand,XRNode.RightHand};
         bool lastTrigger, lastStop;
         public LineRenderer ray;
         void Update()
         {
             bool trigger=false, stop=false;
-            foreach (XRNode hand in new[]{XRNode.LeftHand,XRNode.RightHand})
+            foreach (XRNode hand in Hands)
             {
                 var d=InputDevices.GetDeviceAtXRNode(hand);
                 if (d.TryGetFeatureValue(CommonUsages.triggerButton,out bool t)) trigger|=t;

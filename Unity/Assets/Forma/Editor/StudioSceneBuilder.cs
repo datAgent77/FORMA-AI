@@ -35,6 +35,7 @@ namespace Forma.Editor
             var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
             var root=new GameObject("FORMA Studio");
             var c=root.AddComponent<StudioController>();
+            var presentation=new GameObject("Workout presentation").transform;presentation.SetParent(root.transform,false);
             Camera camera;
             if (quest)
             {
@@ -60,20 +61,20 @@ namespace Forma.Editor
             var rayObject=new GameObject("Gaze Ray"); pointer.ray=rayObject.AddComponent<LineRenderer>();
             pointer.ray.positionCount=2; pointer.ray.startWidth=0.003f; pointer.ray.endWidth=0.003f;
             pointer.ray.material=Material(new Color(0.35f,0.95f,0.75f));
-            c.summary=Text(root.transform,"Completion summary",new Vector3(-1.05f,2.48f,2.8f),"",0.028f);
-            c.status=Text(root.transform,"Session",new Vector3(-1.05f,2.15f,2.8f),"FORMA STUDIO",0.032f);
-            c.coach=Text(root.transform,"Coach cues",new Vector3(-1.05f,1.76f,2.8f),"Welcome",0.027f);
-            Text(root.transform,"Safety",new Vector3(-1.05f,1.48f,2.8f),
+            c.summary=Text(presentation,"Completion summary",new Vector3(-1.05f,2.48f,2.8f),"",0.028f);
+            c.status=Text(presentation,"Session",new Vector3(-1.05f,2.15f,2.8f),"FORMA STUDIO",0.032f);
+            c.coach=Text(presentation,"Coach cues",new Vector3(-1.05f,1.76f,2.8f),"Welcome",0.027f);
+            Text(presentation,"Safety",new Vector3(-1.05f,1.48f,2.8f),
                 "Stay inside your Quest boundary. Clear people, pets and obstacles.\nNo equipment. Stop for discomfort, dizziness or loss of visibility.\nGaze + trigger to select. Either B/Y button pauses immediately.",0.021f);
-            c.marchButton=Button(root.transform,"Gentle march",-0.55f,1.16f,0.92f);
-            c.shoulderButton=Button(root.transform,"Shoulder rolls",0.55f,1.16f,0.92f);
-            c.confirmButton=Button(root.transform,"Confirm clear space",0,0.96f,2.02f);
-            c.startButton=Button(root.transform,"Start guided workout",-0.55f,0.76f,0.92f);
-            c.pauseButton=Button(root.transform,"PAUSE / STOP MOVING",0.55f,0.76f,0.92f,true);
-            c.endButton=Button(root.transform,"End session",-0.55f,0.56f,0.92f);
-            c.exitButton=Button(root.transform,"Exit app",0.55f,0.56f,0.92f);
+            c.marchButton=Button(presentation,"Gentle march",-0.55f,1.16f,0.92f);
+            c.shoulderButton=Button(presentation,"Shoulder rolls",0.55f,1.16f,0.92f);
+            c.confirmButton=Button(presentation,"Confirm clear space",0,0.96f,2.02f);
+            c.startButton=Button(presentation,"Start guided workout",-0.55f,0.76f,0.92f);
+            c.pauseButton=Button(presentation,"PAUSE / STOP MOVING",0.55f,0.76f,0.92f,true);
+            c.endButton=Button(presentation,"End session",-0.55f,0.56f,0.92f);
+            c.exitButton=Button(presentation,"Exit app",0.55f,0.56f,0.92f);
             // Side panel sits beside, never over, the coach. No room-sized floor or skybox.
-            var log=new GameObject("History and manual log"); log.transform.position=new Vector3(2.35f,0,0.6f);
+            var log=new GameObject("History and manual log");log.transform.SetParent(presentation,false); log.transform.position=new Vector3(2.35f,0,0.6f);
             log.transform.rotation=Quaternion.Euler(0,35,0);
             c.history=Text(log.transform,"History",new Vector3(-1.05f,2.1f,2.8f),"Local history",0.024f);
             c.entryExerciseButton=Button(log.transform,"Manual exercise",0,1.1f,2.02f);
@@ -81,7 +82,13 @@ namespace Forma.Editor
             c.weightButton=Button(log.transform,"Kg +0.5",0,0.7f,2.02f);
             c.deleteButton=Button(log.transform,"Delete local data",0,0.5f,2.02f);
             c.avatar=Avatar(new Vector3(-1.85f,0,3));
-            Text(root.transform,"Coach label",new Vector3(-2.3f,1.95f,3),"FORMA COACH\nIllustrative movement",0.024f);
+            var setup=root.AddComponent<OnboardingController>();c.onboarding=setup;
+            setup.studio=c;setup.view=camera;setup.workoutPresentation=presentation.gameObject;
+            setup.appearance=c.avatar.gameObject.AddComponent<CoachAppearance>();
+            setup.editButton=Button(log.transform,"Edit coach and preferences",0,2.55f,2.02f);
+            setup.exportButton=Button(log.transform,"Export setup profile",0,2.35f,2.02f);
+            setup.repositionButton=Button(log.transform,"Move coach",0,0.28f,2.02f);
+            Text(presentation,"Coach label",new Vector3(-2.3f,1.95f,3),"FORMA COACH\nIllustrative movement",0.024f);
             Directory.CreateDirectory("Assets/Forma/Scenes");
             EditorSceneManager.SaveScene(scene,path);
             AssetDatabase.SaveAssets();

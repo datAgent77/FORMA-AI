@@ -20,6 +20,22 @@ namespace Forma.Product
             }
         }
     }
+    public sealed class ConfiguredOfflineCoach : ICoachPolicy
+    {
+        readonly DeterministicCoach fallback=new DeterministicCoach();
+        readonly string welcome;
+        public ConfiguredOfflineCoach(CoachDefinition appearance,PersonalityStyle style)
+        {
+            var selected=appearance.Copy();selected.personality=style;
+            // Workout cues remain English in Phase 1; setup clearly discloses this.
+            welcome=new OfflineCoachDialogue().Welcome(selected,"en");
+        }
+        public CoachCue Evaluate(WorkoutMachine workout)
+        {
+            var safe=fallback.Evaluate(workout);
+            return workout.State==WorkoutState.Introduction?new CoachCue(safe.State,welcome+"\n"+safe.Text):safe;
+        }
+    }
     public sealed class OfflineWorkoutRecommendations : IWorkoutRecommendationService
     {
         readonly IWorkoutSafetyValidator validator;

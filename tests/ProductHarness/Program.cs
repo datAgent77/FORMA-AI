@@ -20,6 +20,13 @@ static class Program
         Throws<ArgumentException>(()=>catalog.Get("celebrity"),"unknown coach rejected");
         var bad=JsonSerializer.Deserialize<CoachCatalogDocument>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Coaches.json")),Json);
         bad.coaches[1].id="sol";Throws<ArgumentException>(()=>new CoachCatalog(bad),"duplicate coach rejected");
+        var configured=new ConfiguredOfflineCoach(catalog.Get("sol"),PersonalityStyle.CalmGuide);
+        var trial=new WorkoutMachine(StarterWorkouts.Create(true,true));trial.Start(true);
+        Check(configured.Evaluate(trial).Text.Contains("comfortable pace") && configured.Evaluate(trial).Text.Contains("Stop if uncomfortable"),"personality preserves shared safety introduction");
+        trial.Tick(10);Check(configured.Evaluate(trial).Text==new DeterministicCoach().Evaluate(trial).Text,"personality cannot replace exercise safety guidance");
+        foreach(string locale in new[]{"en","tr"})
+            foreach(MovementLimits limits in new[]{MovementLimits.Undisclosed,MovementLimits.AvoidLowerBody,MovementLimits.AvoidShoulders,MovementLimits.AvoidLowerBody|MovementLimits.AvoidShoulders})
+                Check(!string.IsNullOrWhiteSpace(SetupCopy.Value(limits,locale)),"movement exclusion localized "+locale+" "+limits);
         var profile=new ProductProfile();Check(ProductProfile.IsValid(profile),"default profile valid with no sensitive data");
         profile.audioVolume=float.NaN;Check(!ProductProfile.IsValid(profile),"nonfinite audio rejected");profile.audioVolume=0.5f;
         profile.language="xx";Check(!ProductProfile.IsValid(profile),"unsupported locale rejected");profile.language="en";
@@ -53,7 +60,9 @@ static class Program
         Check(!validator.IsAllowed(StarterWorkouts.Create(true,true),limited,TrackingCapabilities.None),"recommendation safety validator rejects incompatible exercise");
         var unknown=new WorkoutPlan("unknown",new[]{new Exercise("jump","Jump","jump",20,15,2)});
         Check(!validator.IsAllowed(unknown,new ProductProfile(),TrackingCapabilities.ValidatedBody),"unknown generated exercise rejected even with tracking");
-        var overload=new WorkoutPlan("too-much",new[]{new Exercise("march","March","march",60,15,8)});
+        var unsafeText=new WorkoutPlan("unsafe",new[]{new Exercise("march","Gentle march","Pick up heavy weights and jump",20,15,2)});
+        Check(!validator.IsAllowed(unsafeText,new ProductProfile(),TrackingCapabilities.None),"known ID cannot smuggle unreviewed exercise instructions");
+        var overload=new WorkoutPlan("too-much",new[]{new Exercise("march",StarterWorkouts.March.Name,StarterWorkouts.March.Guidance,60,15,8)});
         Check(!validator.IsAllowed(overload,new ProductProfile(),TrackingCapabilities.None),"unsupported dose rejected");
         foreach(var p in catalog.All)
         { var dialogue=new OfflineCoachDialogue();Check(!string.IsNullOrWhiteSpace(dialogue.Welcome(p,"en")) && !string.IsNullOrWhiteSpace(dialogue.Welcome(p,"tr")),"offline dialogue "+p.id); }
@@ -82,6 +91,8 @@ static class Program
             File.WriteAllText(Path.Combine(directory,"product-profile.json"),"broken json");
             Check(repo.Load().Status==ProfileLoadStatus.Invalid,"corrupt profile recognized");
             Throws<InvalidOperationException>(()=>repo.Save(saved),"corrupt profile needs explicit reset");
+            File.WriteAllText(Path.Combine(directory,"product-profile.json"),"{}");
+            Check(repo.Load().Status==ProfileLoadStatus.Unsupported,"missing schema never treated as current profile");
             repo.Delete();Check(repo.Load().Status==ProfileLoadStatus.Missing,"delete resets product profile");
             repo.Save(saved);Check(repo.Load().Status==ProfileLoadStatus.Loaded,"reset allows fresh save");
         }
@@ -99,6 +110,6 @@ static class Program
     {
         public string Encode(ProductProfile p)=>JsonSerializer.Serialize(p,Json);
         public ProductProfile Decode(string data)
-        {try{return JsonSerializer.Deserialize<ProductProfile>(data,Json);}catch(JsonException){throw new ArgumentException("Invalid JSON.");}}
+        {try{using(var document=JsonDocument.Parse(data)){if(!document.RootElement.TryGetProperty("schemaVersion",out var version))return new ProductProfile{schemaVersion=0};if(version.GetInt32()!=2)return new ProductProfile{schemaVersion=version.GetInt32()};}return JsonSerializer.Deserialize<ProductProfile>(data,Json);}catch(JsonException){throw new ArgumentException("Invalid JSON.");}}
     }
 }

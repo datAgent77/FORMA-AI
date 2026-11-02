@@ -49,11 +49,14 @@ namespace Forma.Product
         {
             if(plan==null || !ProductProfile.IsValid(p))return false;
             var seen=new HashSet<string>();
+            var canonical=ExerciseCatalog.FirstWorkout(p);if(canonical==null)return false;
             foreach(var e in plan.Exercises)
             {
                 ExerciseDefinition known=null;foreach(var d in ExerciseCatalog.Beginner)if(d.Timing.Id==e.Id)known=d;
                 if(known==null || !ExerciseCatalog.Allowed(known,p) || !seen.Add(e.Id) || e.WorkSeconds>20 || e.Sets>2 ||
-                    e.RestSeconds<15 || (known.RequiredTracking & available)!=known.RequiredTracking) return false;
+                    e.RestSeconds<15 || e.RestSeconds>60 || (known.RequiredTracking & available)!=known.RequiredTracking) return false;
+                Exercise expected=null;foreach(var value in canonical.Exercises)if(value.Id==e.Id)expected=value;
+                if(expected==null || e.Name!=expected.Name || e.Guidance!=expected.Guidance)return false;
             }
             return true;
         }

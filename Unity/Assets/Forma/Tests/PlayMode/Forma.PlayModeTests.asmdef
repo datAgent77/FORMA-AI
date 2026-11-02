@@ -1,0 +1,12 @@
+{
+  "name": "Forma.PlayModeTests",
+  "references": [
+    "Forma.Runtime",
+    "Forma.Product",
+    "Forma.Domain",
+    "Forma.Storage"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
