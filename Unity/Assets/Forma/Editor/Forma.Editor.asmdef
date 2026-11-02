@@ -1,0 +1,10 @@
+{
+  "name": "Forma.Editor",
+  "references": [
+    "Forma.Runtime",
+    "Forma.Domain"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

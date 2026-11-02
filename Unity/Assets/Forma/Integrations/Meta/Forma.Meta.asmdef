@@ -1,0 +1,14 @@
+{
+  "name": "Forma.Meta",
+  "references": [
+    "Forma.Runtime",
+    "Oculus.VR"
+  ],
+  "defineConstraints": [
+    "FORMA_META_XR"
+  ],
+  "includePlatforms": [
+    "Android",
+    "Editor"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Forma.Runtime",
+  "rootNamespace": "Forma.Runtime",
+  "references": [
+    "Forma.Domain"
+  ]
+}

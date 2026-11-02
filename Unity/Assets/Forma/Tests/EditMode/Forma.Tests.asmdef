@@ -1,0 +1,13 @@
+{
+  "name": "Forma.Tests",
+  "references": [
+    "Forma.Domain",
+    "Forma.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

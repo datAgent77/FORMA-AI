@@ -1,0 +1,10 @@
+{
+  "verifiedOn": "2026-10-31",
+  "unityEditor": "6000.3.27f2",
+  "packages": {
+    "com.unity.xr.openxr": "1.16.1",
+    "com.unity.test-framework": "1.4.6",
+    "com.meta.xr.sdk.core": "207.0.0"
+  },
+  "note": "Requested pins from official documentation, not a resolved Unity manifest or proven compatibility matrix. Confirm Meta package.json version after authenticated import; preserve actual transitive versions in Unity-generated packages-lock.json."
+}

@@ -1,0 +1,12 @@
+# External dependencies and licensing
+No Unity editor binaries, Meta SDK binaries, proprietary avatar assets or paid content are vendored in this repository.
+
+- **Unity Editor/runtime/toolchain**: proprietary Unity terms and the applicable subscription/eligibility rules. Obtain through Unity Hub. See [Unity legal](https://unity.com/legal) and the [Editor software terms](https://unity.com/legal/terms-of-service/software). Do not assume the project source grants engine redistribution rights.
+- **Meta XR Core SDK 207**: required for Quest passthrough/rig integration. Obtain through the official Meta/Unity distribution, accept the license displayed there, and retain the installed package's license/notice files. See the [official Core distribution](https://developers.meta.com/vr/downloads/package/meta-xr-core-sdk/). The [current official Asset Store listing](https://assetstore.unity.com/packages/sdk/meta-xr-sdk-9022845) explicitly requires acceptance of Unity Asset Store terms and Meta EULA. Exact installed license/version must be recorded before distribution. Asset Store acquisition is not evidence that this project owns all redistribution rights.
+- **Meta Movement SDK**: future optional dependency only; absent from Phase 1. Recheck official hardware support, use restrictions and package license before installing. No form-detection capability is implied by the contract.
+- **Unity OpenXR, XR management and transitive dependencies**: Unity registry packages; review each resolved package's LICENSE and third-party notices. OpenXR being a standard does not assign a single license to every implementation.
+- **Unity Test Framework/NUnit**: development/test dependencies. Preserve package-supplied licenses and NUnit notices when redistributing test tools.
+- **.NET 8 SDK/runtime**: used only for the independent domain harness and CI, not bundled in the Quest application. See [dotnet licensing](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT).
+- **GitHub Actions checkout/setup-dotnet**: CI tooling, not device runtime dependencies. Pin reviewed action commit SHAs before enabling CI in an organization with supply-chain requirements; major-version tags here are initial configuration.
+
+After actual Editor import, inventory the generated package lock and copy/package required notices according to each dependency's terms. This is a dependency disclosure, not a legal clearance or a substitute for the installed license text. Original FORMA code has no public redistribution grant until the owner selects one.
