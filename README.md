@@ -11,6 +11,9 @@ Offline first-use setup now has authored Unity presentation and tested product r
 
 See [Phase 2 delivery](docs/phase2/DELIVERY.md), [architecture](docs/phase2/ARCHITECTURE.md), [UX](docs/phase2/UX.md), [privacy](docs/phase2/PRIVACY.md) and [store readiness](docs/phase2/STORE-READINESS.md). Milestone C and later runtime work are gated on A/B acceptance.
 
+## Browser simulation for testing
+Run `bash tools/run-web-simulation.sh`, then open [localhost:5078](http://127.0.0.1:5078/). This is a local development test host using the actual shared C# workout/onboarding rules. It simulates XR signals and uses an illustrated coach; it does not validate Unity rendering or Quest safety. See [web simulation instructions and test evidence](docs/WEB-SIMULATION.md).
+
 ## Start here
 1. Follow [Unity and dependency setup](docs/SETUP.md). Unity itself generates the project metadata.
 2. Use `FORMA > Create Desktop Preview Scene` for a desktop logic/UI preview.

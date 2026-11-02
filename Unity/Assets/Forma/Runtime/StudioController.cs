@@ -192,6 +192,7 @@ namespace Forma.Runtime
             if (record==null) return true;
             record.activeSeconds=workout.ActiveSeconds; record.completedSets=workout.CompletedSets;
             bool terminal=workout.State==WorkoutState.Completed || workout.State==WorkoutState.Aborted;
+            if(terminal && record.outcome!=workout.State.ToString())safety.EnvironmentConfirmed=false;
             record.outcome=terminal?workout.State.ToString():"Interrupted";
             if (terminal && string.IsNullOrEmpty(record.endedUtc)) record.endedUtc=DateTime.UtcNow.ToString("O");
             try { store.Save(record); RefreshHistory(); return true; }

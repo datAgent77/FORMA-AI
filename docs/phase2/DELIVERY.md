@@ -49,3 +49,6 @@ Screenshots: none; Unity/headset execution is unavailable. No mockup is presente
 
 ## Milestones C–H
 **Not started as runtime implementations.** The user's condition for C is stable and tested A/B. Headset/UI execution is unverified, so that condition has not been met. Next C work after acceptance: warm-up/skip, invalid transition expansion, durable checkpoint restoration and localized workout cues. Zen Summit, progress comparisons, production commerce, backend and store-submission assets remain later work. Source contracts and preparation documents do not count as those implementations.
+
+## Follow-up: web simulation testing
+At the user's request, a loopback browser simulator now executes the shared C# workout/onboarding rules. See [the dated web test report](../WEB-SIMULATION.md) for 22 passing HTTP scenarios, actual browser checks and captures. This adds web-flow evidence; Unity/hardware gates above remain open. No immersive world, AI backend or billing was started.

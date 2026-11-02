@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Unity/Assets/Forma/Domain/*.cs" Link="Domain/%(Filename)%(Extension)" Nullable="disable" />
+    <Compile Include="../../Unity/Assets/Forma/Product/*.cs" Link="Product/%(Filename)%(Extension)" />
+    <Compile Include="../../Unity/Assets/Forma/Storage/*.cs" Link="Storage/%(Filename)%(Extension)" />
+    <Content Include="../../Unity/Assets/Forma/Resources/Forma/Coaches.json" Link="Coaches.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

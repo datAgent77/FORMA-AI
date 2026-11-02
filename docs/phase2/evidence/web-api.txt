@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: browser assets serve locally with no remote dependencies
+ok 1 - browser assets serve locally with no remote dependencies
+  ---
+  duration_ms: 125.374917
+  type: 'test'
+  ...
+# Subtest: simulation begins with shared welcome and unconfirmed space
+ok 2 - simulation begins with shared welcome and unconfirmed space
+  ---
+  duration_ms: 106.622833
+  type: 'test'
+  ...
+# Subtest: setup rejects missing safety checks and preserves completion gate
+ok 3 - setup rejects missing safety checks and preserves completion gate
+  ---
+  duration_ms: 120.6955
+  type: 'test'
+  ...
+# Subtest: optional profile skip clears volunteered fields without erasing posture
+ok 4 - optional profile skip clears volunteered fields without erasing posture
+  ---
+  duration_ms: 57.137375
+  type: 'test'
+  ...
+# Subtest: write failure keeps review open; retry persists actual C\# profile repository
+ok 5 - write failure keeps review open; retry persists actual C\# profile repository
+  ---
+  duration_ms: 132.138
+  type: 'test'
+  ...
+# Subtest: onboarding focus interruption invalidates both physical confirmations
+ok 6 - onboarding focus interruption invalidates both physical confirmations
+  ---
+  duration_ms: 80.22725
+  type: 'test'
+  ...
+# Subtest: seated profile uses seated shoulder guidance and excludes standing march
+ok 7 - seated profile uses seated shoulder guidance and excludes standing march
+  ---
+  duration_ms: 107.710333
+  type: 'test'
+  ...
+# Subtest: no compatible starter movement fails closed
+ok 8 - no compatible starter movement fails closed
+  ---
+  duration_ms: 103.224
+  type: 'test'
+  ...
+# Subtest: pause freezes test clock; resume requires fresh explicit space confirmation
+ok 9 - pause freezes test clock; resume requires fresh explicit space confirmation
+  ---
+  duration_ms: 104.792167
+  type: 'test'
+  ...
+# Subtest: focus loss pauses and recovery never auto-resumes
+ok 10 - focus loss pauses and recovery never auto-resumes
+  ---
+  duration_ms: 62.005625
+  type: 'test'
+  ...
+# Subtest: tracking loss pauses and recovery never auto-resumes
+ok 11 - tracking loss pauses and recovery never auto-resumes
+  ---
+  duration_ms: 77.996209
+  type: 'test'
+  ...
+# Subtest: passthrough loss pauses and recovery never auto-resumes
+ok 12 - passthrough loss pauses and recovery never auto-resumes
+  ---
+  duration_ms: 59.485292
+  type: 'test'
+  ...
+# Subtest: shared workout completes exactly and recorded totals survive setup editing
+ok 13 - shared workout completes exactly and recorded totals survive setup editing
+  ---
+  duration_ms: 86.773792
+  type: 'test'
+  ...
+# Subtest: exit pauses first and confirms second; returning cannot start automatically
+ok 14 - exit pauses first and confirms second; returning cannot start automatically
+  ---
+  duration_ms: 56.387792
+  type: 'test'
+  ...
+# Subtest: reset requires confirmation and cannot delete an active session
+ok 15 - reset requires confirmation and cannot delete an active session
+  ---
+  duration_ms: 41.207666
+  type: 'test'
+  ...
+# Subtest: browser sessions remain isolated
+ok 16 - browser sessions remain isolated
+  ---
+  duration_ms: 8.966666
+  type: 'test'
+  ...
+# Subtest: invalid field and invalid preference cannot mutate valid profile
+ok 17 - invalid field and invalid preference cannot mutate valid profile
+  ---
+  duration_ms: 10.08275
+  type: 'test'
+  ...
+# Subtest: test clock rejects invalid or excessive elapsed time
+ok 18 - test clock rejects invalid or excessive elapsed time
+  ---
+  duration_ms: 37.914417
+  type: 'test'
+  ...
+# Subtest: cross-origin and simple write requests are rejected
+ok 19 - cross-origin and simple write requests are rejected
+  ---
+  duration_ms: 4.769625
+  type: 'test'
+  ...
+# Subtest: export is labeled synthetic and includes only the current browser session
+ok 20 - export is labeled synthetic and includes only the current browser session
+  ---
+  duration_ms: 36.741333
+  type: 'test'
+  ...
+# Subtest: exercise selection uses the shared plan and never allows an empty workout
+ok 21 - exercise selection uses the shared plan and never allows an empty workout
+  ---
+  duration_ms: 38.408
+  type: 'test'
+  ...
+# Subtest: completion clears physical-space confirmation before the next session
+ok 22 - completion clears physical-space confirmation before the next session
+  ---
+  duration_ms: 37.239791
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1699.07575

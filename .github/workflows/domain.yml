@@ -12,4 +12,8 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet run --project tests/DomainHarness/DomainHarness.csproj --configuration Release
       - run: dotnet run --project tests/ProductHarness/ProductHarness.csproj --configuration Release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bash tools/test-web-simulation.sh
       - run: python3 tools/validate-source.py
