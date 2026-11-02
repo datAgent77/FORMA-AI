@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {inspectAR,requestMR,isTransparentSession} from '../../tools/WebSimulation/wwwroot/xr-session.mjs';
+const base=process.env.FORMA_SIM_URL||'http://127.0.0.1:5078';
+test('WebXR assets and pinned local renderer are available',async()=>{for(const path of ['/xr.html','/xr.mjs','/xr.css','/xr-session.mjs','/vendor/three/three.module.js','/vendor/three/three.core.js','/vendor/three/LICENSE.txt'])assert.equal((await fetch(base+path)).status,200,path);});
+test('unsupported browser is reported without fabricating a session',async()=>{assert.equal((await inspectAR(undefined,true)).supported,false);assert.equal((await inspectAR({isSessionSupported:async()=>false},true)).supported,false);});
+test('insecure contexts are rejected before capability access',async()=>{let called=false;assert.equal((await inspectAR({isSessionSupported:async()=>{called=true;}},false)).supported,false);assert.equal(called,false);});
+test('requestMR uses actual immersive-ar and local-floor with no VR fallback',async()=>{let args;const actual={environmentBlendMode:'alpha-blend'};const xr={requestSession:(...a)=>{args=a;return Promise.resolve(actual);}};assert.equal(await requestMR(xr,{secure:true,confirmed:true,noEquipment:true}),actual);assert.deepEqual(args,['immersive-ar',{requiredFeatures:['local-floor']}]);});
+test('missing clear-space or equipment-free confirmation never requests XR',async()=>{let called=false;const xr={requestSession:()=>{called=true;}};await assert.rejects(requestMR(xr,{secure:true,confirmed:false,noEquipment:true}));await assert.rejects(requestMR(xr,{secure:true,confirmed:true,noEquipment:false}));assert.equal(called,false);});
+test('opaque sessions cannot be mistaken for passthrough',()=>{assert.equal(isTransparentSession({environmentBlendMode:'opaque'}),false);assert.equal(isTransparentSession({environmentBlendMode:'alpha-blend'}),true);assert.equal(isTransparentSession({environmentBlendMode:'additive'}),true);assert.equal(isTransparentSession(undefined),false);});

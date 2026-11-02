@@ -12,3 +12,5 @@ No Unity editor binaries, Meta SDK binaries, proprietary avatar assets or paid c
 After actual Editor import, inventory the generated package lock and copy/package required notices according to each dependency's terms. This is a dependency disclosure, not a legal clearance or a substitute for the installed license text. Original FORMA code has no public redistribution grant until the owner selects one.
 
 Phase 2 A/B adds no SDK, third-party model, font download or audio dependency. Original coach definitions/procedural development appearances are documented in `Unity/Assets/Forma/Resources/Forma/README.md`. Built-in Unity primitives and LegacyRuntime font remain subject to Unity's applicable runtime distribution terms. No celebrity voice/likeness is used.
+
+WebXR development demo adds **Three.js 0.187.0**, MIT-licensed, distributed locally in `tools/WebSimulation/wwwroot/vendor/three/` with the complete `LICENSE.txt` and source/hash provenance. This dependency is for the browser demo, not the Unity client. No runtime CDN, headset emulator or additional proprietary XR SDK was installed.

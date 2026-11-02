@@ -1,0 +1,262 @@
+TAP version 13
+# Subtest: browser assets serve locally with no remote dependencies
+ok 1 - browser assets serve locally with no remote dependencies
+  ---
+  duration_ms: 60.571458
+  type: 'test'
+  ...
+# Subtest: simulation begins with shared welcome and unconfirmed space
+ok 2 - simulation begins with shared welcome and unconfirmed space
+  ---
+  duration_ms: 57.241333
+  type: 'test'
+  ...
+# Subtest: setup rejects missing safety checks and preserves completion gate
+ok 3 - setup rejects missing safety checks and preserves completion gate
+  ---
+  duration_ms: 31.481416
+  type: 'test'
+  ...
+# Subtest: optional profile skip clears volunteered fields without erasing posture
+ok 4 - optional profile skip clears volunteered fields without erasing posture
+  ---
+  duration_ms: 18.690625
+  type: 'test'
+  ...
+# Subtest: write failure keeps review open; retry persists actual C\# profile repository
+ok 5 - write failure keeps review open; retry persists actual C\# profile repository
+  ---
+  duration_ms: 38.932375
+  type: 'test'
+  ...
+# Subtest: onboarding focus interruption invalidates both physical confirmations
+ok 6 - onboarding focus interruption invalidates both physical confirmations
+  ---
+  duration_ms: 22.3345
+  type: 'test'
+  ...
+# Subtest: seated profile uses seated shoulder guidance and excludes standing march
+ok 7 - seated profile uses seated shoulder guidance and excludes standing march
+  ---
+  duration_ms: 26.583166
+  type: 'test'
+  ...
+# Subtest: no compatible starter movement fails closed
+ok 8 - no compatible starter movement fails closed
+  ---
+  duration_ms: 24.615958
+  type: 'test'
+  ...
+# Subtest: pause freezes test clock; resume requires fresh explicit space confirmation
+ok 9 - pause freezes test clock; resume requires fresh explicit space confirmation
+  ---
+  duration_ms: 43.2575
+  type: 'test'
+  ...
+# Subtest: focus loss pauses and recovery never auto-resumes
+ok 10 - focus loss pauses and recovery never auto-resumes
+  ---
+  duration_ms: 36.557667
+  type: 'test'
+  ...
+# Subtest: tracking loss pauses and recovery never auto-resumes
+ok 11 - tracking loss pauses and recovery never auto-resumes
+  ---
+  duration_ms: 41.102834
+  type: 'test'
+  ...
+# Subtest: passthrough loss pauses and recovery never auto-resumes
+ok 12 - passthrough loss pauses and recovery never auto-resumes
+  ---
+  duration_ms: 36.348333
+  type: 'test'
+  ...
+# Subtest: shared workout completes exactly and recorded totals survive setup editing
+ok 13 - shared workout completes exactly and recorded totals survive setup editing
+  ---
+  duration_ms: 72.969916
+  type: 'test'
+  ...
+# Subtest: exit pauses first and confirms second; returning cannot start automatically
+ok 14 - exit pauses first and confirms second; returning cannot start automatically
+  ---
+  duration_ms: 63.553833
+  type: 'test'
+  ...
+# Subtest: reset requires confirmation and cannot delete an active session
+ok 15 - reset requires confirmation and cannot delete an active session
+  ---
+  duration_ms: 50.066708
+  type: 'test'
+  ...
+# Subtest: browser sessions remain isolated
+ok 16 - browser sessions remain isolated
+  ---
+  duration_ms: 11.3995
+  type: 'test'
+  ...
+# Subtest: invalid field and invalid preference cannot mutate valid profile
+ok 17 - invalid field and invalid preference cannot mutate valid profile
+  ---
+  duration_ms: 9.320292
+  type: 'test'
+  ...
+# Subtest: test clock rejects invalid or excessive elapsed time
+ok 18 - test clock rejects invalid or excessive elapsed time
+  ---
+  duration_ms: 38.204542
+  type: 'test'
+  ...
+# Subtest: cross-origin and simple write requests are rejected
+ok 19 - cross-origin and simple write requests are rejected
+  ---
+  duration_ms: 3.998167
+  type: 'test'
+  ...
+# Subtest: export is labeled synthetic and includes only the current browser session
+ok 20 - export is labeled synthetic and includes only the current browser session
+  ---
+  duration_ms: 34.272084
+  type: 'test'
+  ...
+# Subtest: exercise selection uses the shared plan and never allows an empty workout
+ok 21 - exercise selection uses the shared plan and never allows an empty workout
+  ---
+  duration_ms: 31.171167
+  type: 'test'
+  ...
+# Subtest: completion clears physical-space confirmation before the next session
+ok 22 - completion clears physical-space confirmation before the next session
+  ---
+  duration_ms: 39.837625
+  type: 'test'
+  ...
+# Subtest: daily check-in and recommendation source assets are served
+ok 23 - daily check-in and recommendation source assets are served
+  ---
+  duration_ms: 38.05325
+  type: 'test'
+  ...
+# Subtest: daily recommendation requires confirmed physical space
+ok 24 - daily recommendation requires confirmed physical space
+  ---
+  duration_ms: 116.219667
+  type: 'test'
+  ...
+# Subtest: low energy selects a truthful short gentle alternative
+ok 25 - low energy selects a truthful short gentle alternative
+  ---
+  duration_ms: 33.380042
+  type: 'test'
+  ...
+# Subtest: unsupported strength request is disclosed rather than fabricated
+ok 26 - unsupported strength request is disclosed rather than fabricated
+  ---
+  duration_ms: 22.037958
+  type: 'test'
+  ...
+# Subtest: high energy never increases starter dose or invents equipment
+ok 27 - high energy never increases starter dose or invents equipment
+  ---
+  duration_ms: 27.498792
+  type: 'test'
+  ...
+# Subtest: quick choice cannot discard a reported safety concern
+ok 28 - quick choice cannot discard a reported safety concern
+  ---
+  duration_ms: 27.098625
+  type: 'test'
+  ...
+# Subtest: a safety concern during movement pauses and blocks resume
+ok 29 - a safety concern during movement pauses and blocks resume
+  ---
+  duration_ms: 29.879042
+  type: 'test'
+  ...
+# Subtest: spatial changes invalidate confirmation and exclude standing steps
+ok 30 - spatial changes invalidate confirmation and exclude standing steps
+  ---
+  duration_ms: 35.964458
+  type: 'test'
+  ...
+# Subtest: unknown alternative cannot bypass the allowlist
+ok 31 - unknown alternative cannot bypass the allowlist
+  ---
+  duration_ms: 31.238875
+  type: 'test'
+  ...
+# Subtest: greeting and reflection use actual saved completions after relaunch
+ok 32 - greeting and reflection use actual saved completions after relaunch
+  ---
+  duration_ms: 48.110625
+  type: 'test'
+  ...
+# Subtest: same-version comparisons are truthful when there is no increase
+ok 33 - same-version comparisons are truthful when there is no increase
+  ---
+  duration_ms: 37.3425
+  type: 'test'
+  ...
+# Subtest: recent recorded participation changes default without creating physiological load
+ok 34 - recent recorded participation changes default without creating physiological load
+  ---
+  duration_ms: 100.537041
+  type: 'test'
+  ...
+# Subtest: invalid readiness cannot overwrite a valid input
+ok 35 - invalid readiness cannot overwrite a valid input
+  ---
+  duration_ms: 42.031333
+  type: 'test'
+  ...
+# Subtest: check-in concern and energy are not included in persistent/exported records
+ok 36 - check-in concern and energy are not included in persistent/exported records
+  ---
+  duration_ms: 34.672875
+  type: 'test'
+  ...
+# Subtest: WebXR assets and pinned local renderer are available
+ok 37 - WebXR assets and pinned local renderer are available
+  ---
+  duration_ms: 60.126792
+  type: 'test'
+  ...
+# Subtest: unsupported browser is reported without fabricating a session
+ok 38 - unsupported browser is reported without fabricating a session
+  ---
+  duration_ms: 0.682292
+  type: 'test'
+  ...
+# Subtest: insecure contexts are rejected before capability access
+ok 39 - insecure contexts are rejected before capability access
+  ---
+  duration_ms: 0.2525
+  type: 'test'
+  ...
+# Subtest: requestMR uses actual immersive-ar and local-floor with no VR fallback
+ok 40 - requestMR uses actual immersive-ar and local-floor with no VR fallback
+  ---
+  duration_ms: 1.207084
+  type: 'test'
+  ...
+# Subtest: missing clear-space or equipment-free confirmation never requests XR
+ok 41 - missing clear-space or equipment-free confirmation never requests XR
+  ---
+  duration_ms: 0.366042
+  type: 'test'
+  ...
+# Subtest: opaque sessions cannot be mistaken for passthrough
+ok 42 - opaque sessions cannot be mistaken for passthrough
+  ---
+  duration_ms: 0.066416
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 857.538833
