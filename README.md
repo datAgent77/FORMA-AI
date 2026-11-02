@@ -1,10 +1,15 @@
 # FORMA AI
-**Your Real Workout. Your Virtual Universe.**
+**Your Body. Your Coach. Your World.**
+
+Original tagline: Your Real Workout. Your Virtual Universe.
 
 Phase 0/1 source foundation for an offline, mixed-reality fitness studio on Meta Quest 3 and Quest 3S. Two selectable, equipment-free movements: gentle marching in place and shoulder rolls. Each has two 20-second sets, separated by 15-second rests. Selecting both gives a 135-second session including a 10-second introduction; no trailing rest.
 
 ## Status — read first
 Unity is not installed on the authoring host. This repository contains authored C# source, a real-Editor scene builder, tests, and setup/build instructions. **It is not yet an Editor-generated Unity project, a compiled Unity application, or a hardware-validated experience.** No `.unity`, `.meta`, ProjectSettings, package lockfiles or APKs have been fabricated. The definition of success remains unverified until the Quest acceptance checklist passes.
+
+## Phase 4 daily experience
+The feature branch adds a shared deterministic daily check-in and recommendation card, history-backed greeting, quick choice, conservative safety exclusions and compatible alternatives. The current reviewed catalog remains 65–135 second equipment-free starters; 5/10/20/30 minutes are time budgets, not fabricated programs. A requested strength session is explicitly disclosed as unavailable. See [Phase 4 delivery](docs/phase4/DELIVERY.md).
 
 ## Phase 2 A/B additions
 Offline first-use setup now has authored Unity presentation and tested product rules: EN/TR setup, original Sol/Mira/Atlas development coach presets, appearance/personality selection, optional fitness preferences, seated filtering, safety acknowledgement and versioned local profile save/export/reset. No new dependencies were installed. Hands, voice, production character art and Unity/device validation remain outstanding. Phase 1 workout cues stay English, as disclosed during setup.

@@ -88,6 +88,9 @@ namespace Forma.Editor
             setup.editButton=Button(log.transform,"Edit coach and preferences",0,2.55f,2.02f);
             setup.exportButton=Button(log.transform,"Export setup profile",0,2.35f,2.02f);
             setup.repositionButton=Button(log.transform,"Move coach",0,0.28f,2.02f);
+            var today=root.AddComponent<DailyExperienceController>();c.daily=today;
+            today.studio=c;today.onboarding=setup;today.view=camera;today.workoutPresentation=presentation.gameObject;
+            today.todayButton=Button(log.transform,"Today with FORMA",0,0.08f,2.02f);
             Text(presentation,"Coach label",new Vector3(-2.3f,1.95f,3),"FORMA COACH\nIllustrative movement",0.024f);
             Directory.CreateDirectory("Assets/Forma/Scenes");
             EditorSceneManager.SaveScene(scene,path);

@@ -24,4 +24,5 @@ for attempt in $(seq 1 30); do
 done
 if [[ "$ready" != true ]]; then cat "$simulation_data/host.log"; echo 'Simulator did not become ready.' >&2; exit 1; fi
 node --check "$repo/tools/WebSimulation/wwwroot/app.js"
-node --test "$repo/tests/WebSimulation/api.test.mjs"
+node --check "$repo/tools/WebSimulation/wwwroot/daily.js"
+node --test "$repo/tests/WebSimulation/"*.test.mjs

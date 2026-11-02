@@ -12,7 +12,7 @@ public static class SimulationJson
     static JsonSerializerOptions Create(){var o=new JsonSerializerOptions(JsonSerializerDefaults.Web);Configure(o);return o;}
     public static void Configure(JsonSerializerOptions o){o.IncludeFields=true;o.Converters.Add(new JsonStringEnumConverter());}
 }
-public sealed class Simulation
+public sealed partial class Simulation
 {
     readonly string root;
     readonly CoachCatalog catalog;
@@ -42,6 +42,7 @@ public sealed class Simulation
     {
         var loaded=profiles.Load();loadStatus=loaded.Status;flow=new OnboardingFlow(profiles,loaded.Profile);
         workout=null;record=null;gate.EnvironmentConfirmed=false;closed=false;
+        InitializeDaily();
         if(SetupReady)PrepareWorkout();
     }
     void PrepareWorkout()
@@ -58,6 +59,7 @@ public sealed class Simulation
     public bool Act(SimulationAction a)
     {
         bool accepted=false;notice="";
+        if(a.Action.StartsWith("daily",StringComparison.Ordinal))return ActDaily(a);
         switch(a.Action)
         {
             case "edit":
@@ -71,7 +73,7 @@ public sealed class Simulation
                 flow.ConfirmSafety(a.Field=="ack"?a.Enabled:flow.SafetyAcknowledged,a.Field=="space"?a.Enabled:flow.SpaceConfirmed);accepted=true;break;
             case "finish":
                 accepted=!LoadBlocked && !closed && flow.Finish();
-                if(accepted){loadStatus=ProfileLoadStatus.Loaded;PrepareWorkout();Log("Setup saved by shared OnboardingFlow.");}
+                if(accepted){loadStatus=ProfileLoadStatus.Loaded;InitializeDaily();PrepareWorkout();Log("Setup saved by shared OnboardingFlow.");}
                 else if(flow.PersistenceBlocked)notice="Simulated save failed. Disable the write fault and retry; setup is still open.";
                 break;
             case "reopen":
@@ -92,7 +94,11 @@ public sealed class Simulation
                 if(!SetupReady || closed)return Reject("Finish setup before entering a workout.");
                 if(SessionActive)return Reject("A workout is already running or paused.");
                 if(!gate.CanExercise)return Reject("Confirm clear space and restore every simulated readiness signal.");
-                Persist();PrepareWorkout();
+                if(readiness.concern!=SafetyConcern.NoneReported)return Reject("A reported safety concern blocks exercise. Stop and seek appropriate advice.");
+                var approved=dailyEnabled?ApprovedDailyPlan():null;
+                if(dailyEnabled && approved==null)return Reject("Review a compatible daily recommendation after confirming your space.");
+                Persist();
+                if(dailyEnabled){workout=new WorkoutMachine(approved);record=null;}else PrepareWorkout();
                 if(workout==null)return Reject("No compatible starter movement. Edit your setup preferences.");
                 accepted=workout.Start(gate.CanExercise);
                 if(accepted)
@@ -108,7 +114,7 @@ public sealed class Simulation
                 workout.Tick(a.Seconds);Persist();accepted=true;break;
             case "pause":Interrupt();accepted=true;break;
             case "resume":
-                accepted=!closed && SetupReady && workout!=null && workout.Resume(gate.CanExercise);
+                accepted=!closed && SetupReady && readiness.concern==SafetyConcern.NoneReported && workout!=null && workout.Resume(gate.CanExercise);
                 if(accepted){Persist();Log("Workout explicitly resumed.");}break;
             case "stop":
                 if(!SessionActive)return Reject("No active workout to stop.");
@@ -206,7 +212,7 @@ public sealed class Simulation
             compatible=compatible==null?Array.Empty<string>():compatible.Exercises.Select(e=>e.Name).ToArray(),
             coach=new{id=p.coachId,name=look.displayName,color=look.primaryColor,accent=look.accentColor,state=cue.State.ToString(),text=cue.Text},
             exercises=compatible==null?Array.Empty<object>():compatible.Exercises.Select(e=>(object)new{id=e.Id,name=e.Name,selected=e.Id=="march"?selectMarch:selectShoulders}).ToArray(),
-            history,events,
+            history,events,daily=DailySnapshot(),
             labels=new Dictionary<string,string>{["next"]=SetupCopy.Get("next",p.language),["back"]=SetupCopy.Get("back",p.language),["skip"]=SetupCopy.Get("skip",p.language),["finish"]=SetupCopy.Get("finish",p.language),["ack"]=SetupCopy.Get("ack",p.language),["space"]=SetupCopy.Get("space",p.language)},
             options=new{
                 goals=Enum.GetValues<FitnessGoal>().Select(x=>new{value=x.ToString(),label=SetupCopy.Value(x,p.language)}),

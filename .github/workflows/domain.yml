@@ -12,6 +12,7 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet run --project tests/DomainHarness/DomainHarness.csproj --configuration Release
       - run: dotnet run --project tests/ProductHarness/ProductHarness.csproj --configuration Release
+      - run: dotnet run --project tests/AdaptiveHarness/AdaptiveHarness.csproj --configuration Release
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

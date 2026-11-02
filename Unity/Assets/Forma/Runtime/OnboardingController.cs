@@ -77,6 +77,7 @@ namespace Forma.Runtime
         }
         void Apply()
         { Preview();studio.ApplyProductProfile(flow.Draft);studio.ConfigureCoach(catalog.Get(flow.Draft.coachId),flow.Draft.personality);if(appearance!=null)appearance.Place(view,coachSlot); }
+        public void RequestCoachMove()=>MoveCoach();
         void MoveCoach()
         {
             if(!studio.CanEditPreferences && ReadyForWorkout)return;

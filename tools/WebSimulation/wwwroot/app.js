@@ -115,6 +115,7 @@ function render(){
  for(const record of state.history.slice(0,4)){
   const row=element('div',undefined,'history-row');row.append(element('strong',record.outcome),element('span',`${Math.floor(record.activeSeconds)} test seconds / ${record.completedSets} sets`),element('em',record.startedUtc.slice(0,16).replace('T',' ')));history.append(row);
  }
+ if(typeof renderDaily==='function')renderDaily();
  const events=$('event-list');events.replaceChildren();for(const text of state.events.slice(0,5))events.append(element('li',text));
  document.querySelectorAll('[data-advance]').forEach(b=>b.disabled=!running);
 }

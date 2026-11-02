@@ -11,6 +11,19 @@ namespace Forma.Runtime
     {
         public StudioPlatform platform;
         public OnboardingController onboarding;
+        public DailyExperienceController daily;
+        WorkoutPlan dailyOverride;
+        public WorkoutMachine CurrentWorkout=>workout;
+        public bool UseDailyPlan(WorkoutPlan plan)
+        {
+            if(!CanEditPreferences || plan==null || (record!=null && !Persist()))return false;
+            record=null;dailyOverride=plan;workoutAvailable=true;workout=new WorkoutMachine(plan);InvalidateSpaceConfirmation();return true;
+        }
+        public bool ResetForDaily()
+        {
+            if(!CanEditPreferences || (record!=null && !Persist()))return false;
+            record=null;dailyOverride=null;CreateWorkout();InvalidateSpaceConfirmation();return true;
+        }
         ProductProfile productProfile;
         WorkoutPlan compatiblePlan;
         bool workoutAvailable=true;
@@ -22,6 +35,7 @@ namespace Forma.Runtime
         public void ConfigureCoach(CoachDefinition appearance,PersonalityStyle style){policy=new ConfiguredOfflineCoach(appearance,style);}
         public void ApplyProductProfile(ProductProfile value)
         {
+            dailyOverride=null;
             productProfile=value.Copy();
             compatiblePlan=new OfflineWorkoutRecommendations(new BeginnerWorkoutValidator()).Recommend(productProfile);
             if(workout!=null && Editable)
@@ -75,6 +89,7 @@ namespace Forma.Runtime
         }
         void CreateWorkout()
         {
+            if(dailyOverride!=null){workoutAvailable=true;workout=new WorkoutMachine(dailyOverride);return;}
             if(productProfile==null)
             {
                 if(!profile.selectMarch && !profile.selectShoulders)profile.selectMarch=true;
@@ -98,6 +113,7 @@ namespace Forma.Runtime
         void Select(bool march)
         {
             if (!Editable) return;
+            if(dailyOverride!=null){message="Use Today to choose another compatible session.";return;}
             if (!Allowed(march?"march":"shoulders")){message="That movement is excluded by your setup preferences.";return;}
             if (record!=null && !Persist()) return;
             if (march) profile.selectMarch=!profile.selectMarch; else profile.selectShoulders=!profile.selectShoulders;
@@ -109,6 +125,7 @@ namespace Forma.Runtime
         {
             if (!Editable) return;
             if(onboarding!=null && !onboarding.ReadyForWorkout){message="Finish setup before starting a workout.";return;}
+            if(daily!=null && !daily.CanStart(workout.Plan.Id)){message="Review today's compatible recommendation before starting.";return;}
             if(!workoutAvailable){message="No compatible starter session. Edit movement preferences; no workout has started.";return;}
             UpdateSafety();
             if (!safety.CanExercise) { message="Check passthrough, tracking and your clear space before starting."; return; }
