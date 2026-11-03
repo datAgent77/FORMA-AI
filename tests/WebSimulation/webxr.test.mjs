@@ -8,3 +8,18 @@ test('insecure contexts are rejected before capability access',async()=>{let cal
 test('requestMR uses actual immersive-ar and local-floor with no VR fallback',async()=>{let args;const actual={environmentBlendMode:'alpha-blend'};const xr={requestSession:(...a)=>{args=a;return Promise.resolve(actual);}};assert.equal(await requestMR(xr,{secure:true,confirmed:true,noEquipment:true}),actual);assert.deepEqual(args,['immersive-ar',{requiredFeatures:['local-floor']}]);});
 test('missing clear-space or equipment-free confirmation never requests XR',async()=>{let called=false;const xr={requestSession:()=>{called=true;}};await assert.rejects(requestMR(xr,{secure:true,confirmed:false,noEquipment:true}));await assert.rejects(requestMR(xr,{secure:true,confirmed:true,noEquipment:false}));assert.equal(called,false);});
 test('opaque sessions cannot be mistaken for passthrough',()=>{assert.equal(isTransparentSession({environmentBlendMode:'opaque'}),false);assert.equal(isTransparentSession({environmentBlendMode:'alpha-blend'}),true);assert.equal(isTransparentSession({environmentBlendMode:'additive'}),true);assert.equal(isTransparentSession(undefined),false);});
+test('reference studio serves a real locally hosted rigged GLB with license and model loaders',async()=>{
+ const response=await fetch(base+'/assets/coach/woman-casual.glb');assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/model\/gltf-binary/);
+ const bytes=Buffer.from(await response.arrayBuffer());assert.equal(bytes.toString('ascii',0,4),'glTF');
+ const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));assert.ok(gltf.skins.length>0);assert.ok(gltf.nodes.length>20);assert.ok(!gltf.images?.some(i=>i.uri?.startsWith('http')));
+ for(const file of ['/studio-scene.mjs','/vendor/three/GLTFLoader.js','/vendor/three/SkeletonUtils.js','/vendor/three/BufferGeometryUtils.js','/assets/coach/PROVENANCE.json'])assert.equal((await fetch(base+file)).status,200,file);
+});
+test('reference timer consumes shared interval duration, including pause and rest',async()=>{
+ const initial=await fetch(base+'/api/state'),cookie=initial.headers.get('set-cookie').split(';')[0];
+ const act=async(action,extra={})=>{const r=await fetch(base+'/api/action',{method:'POST',headers:{cookie,'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});return (await r.json()).state;};
+ await act('next');await act('next');await act('next');await act('safety',{field:'ack',enabled:true});await act('safety',{field:'space',enabled:true});await act('next');await act('finish');await act('confirmSpace',{enabled:true});
+ let state=await act('start');assert.equal(state.workout.intervalSeconds,10);assert.equal(state.plan[0].workSeconds,20);
+ state=await act('advance',{seconds:12});assert.equal(state.workout.intervalSeconds,20);assert.equal(state.workout.remaining,18);
+ state=await act('pause');assert.equal(state.workout.intervalSeconds,20);assert.equal(state.workout.remaining,18);
+ await act('confirmSpace',{enabled:true});await act('resume');state=await act('advance',{seconds:18});assert.equal(state.workout.state,'Rest');assert.equal(state.workout.intervalSeconds,15);
+});

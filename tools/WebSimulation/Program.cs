@@ -33,7 +33,10 @@ app.Use(async(context,next)=>
     }
     await next(context);
 });
-app.UseDefaultFiles();app.UseStaticFiles();
+app.UseDefaultFiles();
+var staticTypes=new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+staticTypes.Mappings[".glb"]="model/gltf-binary";
+app.UseStaticFiles(new StaticFileOptions{ContentTypeProvider=staticTypes});
 Simulation GetSession(HttpContext context)
 {
     string id=context.Request.Cookies["forma-sim"];

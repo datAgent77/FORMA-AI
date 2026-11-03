@@ -51,6 +51,7 @@ namespace Forma.Domain
     // Caller supplies monotonic elapsed time. No wall clock, rendering or platform dependencies.
     public sealed class WorkoutMachine
     {
+        public const double IntroductionSeconds=10;
         public WorkoutPlan Plan { get; }
         public WorkoutState State { get; private set; } = WorkoutState.Ready;
         public WorkoutState SuspendedState { get; private set; }
@@ -60,12 +61,14 @@ namespace Forma.Domain
         public int SetNumber { get; private set; } = 1;
         public int CompletedSets { get; private set; }
         public Exercise Current => Plan.Exercises[ExerciseIndex];
+        public double CurrentIntervalSeconds => (State==WorkoutState.Paused?SuspendedState:State) switch
+        { WorkoutState.Introduction=>IntroductionSeconds, WorkoutState.Work=>Current.WorkSeconds, WorkoutState.Rest=>Current.RestSeconds, _=>0 };
         public bool IsRunning => State==WorkoutState.Introduction || State==WorkoutState.Work || State==WorkoutState.Rest;
         public WorkoutMachine(WorkoutPlan plan) { Plan=plan ?? throw new ArgumentNullException(nameof(plan)); }
         public bool Start(bool safetyReady)
         {
             if (State != WorkoutState.Ready || !safetyReady) return false;
-            State=WorkoutState.Introduction; Remaining=10; return true;
+            State=WorkoutState.Introduction; Remaining=IntroductionSeconds; return true;
         }
         public void Tick(double seconds)
         {

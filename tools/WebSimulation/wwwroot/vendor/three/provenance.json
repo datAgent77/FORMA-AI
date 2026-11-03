@@ -7,6 +7,19 @@
   "sha256": {
     "LICENSE.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
     "three.core.js": "613e370f76638fdef83926642bf256dc9615684922de1ce1f63a8583e5d78578",
-    "three.module.js": "104f56145899722094556490d787aae0617cc2fc3382f31df02d724ea1aee341"
+    "three.module.js": "104f56145899722094556490d787aae0617cc2fc3382f31df02d724ea1aee341",
+    "GLTFLoader.js": "7bbda9f3af9b5acbd89a33cfc0aeb020f34d2d31a72829c79c0b354f9502c8e5",
+    "BufferGeometryUtils.js": "319782169ed48af21fcaa251d839ecb8e58f14174aacbf68b74a437f3d6a3a98",
+    "SkeletonUtils.js": "eedd768765d6553f8082953ab3882e2c86dacc2eb7d180a312d1d52e86bb35c5"
+  },
+  "referenceStudioAdditions": {
+    "source": "https://unpkg.com/three@0.187.0/examples/jsm/",
+    "files": [
+      "loaders/GLTFLoader.js",
+      "utils/BufferGeometryUtils.js",
+      "utils/SkeletonUtils.js"
+    ],
+    "changes": "Only import paths rewritten to local pinned Three.js module and sibling utilities.",
+    "verifiedOn": "2026-11-03"
   }
 }
