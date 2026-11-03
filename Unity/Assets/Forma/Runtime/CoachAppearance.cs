@@ -8,6 +8,7 @@ namespace Forma.Runtime
     {
         readonly List<Material> instances=new List<Material>();
         GameObject accessory;
+        public Transform floorOrigin;
         public void Apply(CoachDefinition definition)
         {
             ColorUtility.TryParseHtmlString(definition.primaryColor,out Color primary);
@@ -31,7 +32,9 @@ namespace Forma.Runtime
             if(forward.sqrMagnitude<0.1f)forward=Vector3.forward;
             forward=Quaternion.AngleAxis(slot==0?-35:slot==1?35:55,Vector3.up)*forward;
             Vector3 position=camera.transform.position+forward*2.6f;
-            position.y=camera.transform.position.y-1.6f;
+            // FloorLevel rig origin, never inferred from user height (including seated users).
+            position.y=floorOrigin!=null?floorOrigin.position.y:0f;
+            transform.localScale=Vector3.one;
             transform.SetPositionAndRotation(position,Quaternion.LookRotation(-forward,Vector3.up));
             // Coach is placed manually by the user. No claim of physical obstacle detection.
         }

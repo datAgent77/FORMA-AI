@@ -37,6 +37,7 @@ namespace Forma.Editor
             var c=root.AddComponent<StudioController>();
             var presentation=new GameObject("Workout presentation").transform;presentation.SetParent(root.transform,false);
             Camera camera;
+            Transform floorOrigin=null,trackingSpace=null;
             if (quest)
             {
                 var rig=(GameObject)PrefabUtility.InstantiatePrefab(rigPrefab);
@@ -48,6 +49,7 @@ namespace Forma.Editor
                 bridge.GetField("layer").SetValue(platform,rig.AddComponent(layerType));
                 camera=rig.transform.Find("TrackingSpace/CenterEyeAnchor").GetComponent<Camera>();
                 c.platform=platform;
+                floorOrigin=rig.transform;trackingSpace=rig.transform.Find("TrackingSpace");
             }
             else
             {
@@ -57,15 +59,20 @@ namespace Forma.Editor
                 cameraObject.AddComponent<AudioListener>(); c.platform=root.AddComponent<EditorPreviewPlatform>();
             }
             camera.tag="MainCamera";
-            var pointer=root.AddComponent<StudioPointer>(); pointer.controller=c; pointer.view=camera;
-            var rayObject=new GameObject("Gaze Ray"); pointer.ray=rayObject.AddComponent<LineRenderer>();
+            var pointer=root.AddComponent<StudioPointer>(); pointer.controller=c; pointer.view=camera; pointer.trackingSpace=trackingSpace;
+            if(quest)
+            {
+                var handType=Type.GetType("Forma.Meta.MetaHandPointer, Forma.Meta",true);
+                pointer.hands=(SpatialInputSource)root.AddComponent(handType);
+            }
+            var rayObject=new GameObject("Interaction Ray"); pointer.ray=rayObject.AddComponent<LineRenderer>();
             pointer.ray.positionCount=2; pointer.ray.startWidth=0.003f; pointer.ray.endWidth=0.003f;
             pointer.ray.material=Material(new Color(0.35f,0.95f,0.75f));
             c.summary=Text(presentation,"Completion summary",new Vector3(-1.05f,2.48f,2.8f),"",0.028f);
             c.status=Text(presentation,"Session",new Vector3(-1.05f,2.15f,2.8f),"FORMA STUDIO",0.032f);
             c.coach=Text(presentation,"Coach cues",new Vector3(-1.05f,1.76f,2.8f),"Welcome",0.027f);
             Text(presentation,"Safety",new Vector3(-1.05f,1.48f,2.8f),
-                "Stay inside your Quest boundary. Clear people, pets and obstacles.\nNo equipment. Stop for discomfort, dizziness or loss of visibility.\nGaze + trigger to select. Either B/Y button pauses immediately.",0.021f);
+                "Stay inside your Quest boundary. Clear people, pets and obstacles.\nNo equipment. Stop for discomfort, dizziness or loss of visibility.\nController ray + trigger; configured hand ray + index pinch. B/Y pauses.",0.021f);
             c.marchButton=Button(presentation,"Gentle march",-0.55f,1.16f,0.92f);
             c.shoulderButton=Button(presentation,"Shoulder rolls",0.55f,1.16f,0.92f);
             c.confirmButton=Button(presentation,"Confirm clear space",0,0.96f,2.02f);
@@ -85,13 +92,14 @@ namespace Forma.Editor
             var setup=root.AddComponent<OnboardingController>();c.onboarding=setup;
             setup.studio=c;setup.view=camera;setup.workoutPresentation=presentation.gameObject;
             setup.appearance=c.avatar.gameObject.AddComponent<CoachAppearance>();
+            setup.appearance.floorOrigin=floorOrigin;
             setup.editButton=Button(log.transform,"Edit coach and preferences",0,2.55f,2.02f);
             setup.exportButton=Button(log.transform,"Export setup profile",0,2.35f,2.02f);
             setup.repositionButton=Button(log.transform,"Move coach",0,0.28f,2.02f);
             var today=root.AddComponent<DailyExperienceController>();c.daily=today;
             today.studio=c;today.onboarding=setup;today.view=camera;today.workoutPresentation=presentation.gameObject;
             today.todayButton=Button(log.transform,"Today with FORMA",0,0.08f,2.02f);
-            Text(presentation,"Coach label",new Vector3(-2.3f,1.95f,3),"FORMA COACH\nIllustrative movement",0.024f);
+            Text(presentation,"Coach label",new Vector3(-2.3f,1.95f,3),"FORMA COACH\nTEMPORARY 3D ASSET / illustrative movement",0.024f);
             Directory.CreateDirectory("Assets/Forma/Scenes");
             EditorSceneManager.SaveScene(scene,path);
             AssetDatabase.SaveAssets();
@@ -131,8 +139,8 @@ namespace Forma.Editor
             var avatar=root.AddComponent<CoachAvatar>();
             Part(root.transform,"Torso",new Vector3(0,1.15f,0),new Vector3(0.36f,0.5f,0.22f),PrimitiveType.Capsule);
             Part(root.transform,"Head",new Vector3(0,1.72f,0),Vector3.one*0.25f,PrimitiveType.Sphere);
-            avatar.leftLeg=Limb(root.transform,"Left leg",new Vector3(-0.12f,0.92f,0),0.65f);
-            avatar.rightLeg=Limb(root.transform,"Right leg",new Vector3(0.12f,0.92f,0),0.65f);
+            avatar.leftLeg=Limb(root.transform,"Left leg",new Vector3(-0.12f,0.92f,0),0.92f);
+            avatar.rightLeg=Limb(root.transform,"Right leg",new Vector3(0.12f,0.92f,0),0.92f);
             avatar.leftArm=Limb(root.transform,"Left arm",new Vector3(-0.3f,1.48f,0),0.5f);
             avatar.rightArm=Limb(root.transform,"Right arm",new Vector3(0.3f,1.48f,0),0.5f);
             return avatar;
@@ -153,17 +161,7 @@ namespace Forma.Editor
         [MenuItem("FORMA/Build Quest Development APK")]
         public static void BuildQuest()
         {
-            if (EditorUserBuildSettings.activeBuildTarget!=BuildTarget.Android) throw new InvalidOperationException("Switch to Android and configure OpenXR first.");
-            if (!File.Exists(QuestPath)) throw new InvalidOperationException("Generate and configure StudioQuest first.");
-            if (Type.GetType("Forma.Meta.MetaStudioPlatform, Forma.Meta")==null) throw new InvalidOperationException("Meta integration is unavailable.");
-            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android,ScriptingImplementation.IL2CPP);
-            PlayerSettings.Android.targetArchitectures=AndroidArchitecture.ARM64;
-            PlayerSettings.companyName="FORMA"; PlayerSettings.productName="FORMA Studio";
-            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android,"com.forma.studio.dev");
-            Directory.CreateDirectory("Builds");
-            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{QuestPath},locationPathName="Builds/FORMA-Studio.apk",
-                target=BuildTarget.Android,options=BuildOptions.Development });
-            if (report.summary.result!=UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new InvalidOperationException("Quest build failed: "+report.summary.result);
+            NativeQuestBuild.Build();
         }
     }
 }

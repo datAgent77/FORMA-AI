@@ -1,0 +1,19 @@
+{
+  "scopedRegistries": [
+    {
+      "name": "Meta XR",
+      "url": "https://npm.developer.oculus.com",
+      "scopes": [
+        "com.meta.xr"
+      ]
+    }
+  ],
+  "dependencies": {
+    "com.meta.xr.sdk.core": "207.0.1",
+    "com.unity.xr.openxr": "1.17.0",
+    "com.unity.test-framework": "1.4.6",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.xr": "1.0.0"
+  }
+}

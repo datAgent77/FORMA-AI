@@ -10,11 +10,12 @@ namespace Forma.Meta
         public override bool PassthroughReady => OVRManager.instance != null &&
             OVRManager.instance.isInsightPassthroughEnabled && OVRManager.IsInsightPassthroughInitialized() &&
             !OVRManager.HasInsightPassthroughInitFailed() && layer != null && layer.isActiveAndEnabled;
-        public override bool TrackingReady => OVRManager.isHmdPresent && OVRManager.hasVrFocus && OVRManager.tracker != null && OVRManager.tracker.isPositionTracked;
+        public override bool TrackingReady => rig!=null && OVRManager.instance!=null && OVRManager.isHmdPresent && OVRManager.hasVrFocus && OVRManager.tracker != null && OVRManager.tracker.isPositionTracked;
         public override bool HasFocus => Application.isFocused && OVRManager.hasInputFocus && OVRManager.hasVrFocus;
         void Start()
         {
-            if (rig==null || layer==null) { Debug.LogError("FORMA Meta rig or passthrough layer missing."); return; }
+            if (rig==null || layer==null || OVRManager.instance==null) { Debug.LogError("FORMA Meta rig or passthrough layer missing."); return; }
+            OVRManager.instance.trackingOriginType=OVRManager.TrackingOrigin.FloorLevel;
             OVRManager.instance.isInsightPassthroughEnabled=true;
             layer.overlayType=OVROverlay.OverlayType.Underlay;
             layer.textureOpacity=1;

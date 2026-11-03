@@ -8,11 +8,16 @@ Phase 0/1 source foundation for an offline, mixed-reality fitness studio on Meta
 ## Status — read first
 Unity is not installed on the authoring host. This repository contains authored C# source, a real-Editor scene builder, tests, and setup/build instructions. **It is not yet an Editor-generated Unity project, a compiled Unity application, or a hardware-validated experience.** No `.unity`, `.meta`, ProjectSettings, package lockfiles or APKs have been fabricated. The definition of success remains unverified until the Quest acceptance checklist passes.
 
+## Native XR priority — 2026-11-02
+The consumer product is **Unity/C# on Quest 3/3S**. Web/WebXR is secondary developer tooling; browser results never establish native functionality. Native milestone is **INCOMPLETE**: this host has Android tools, but no Unity Editor or connected Quest, and no Editor-generated scene, resolved SDK or APK.
+
+Start with the [before-change audit](docs/native/AUDIT-BEFORE.md), [current native status and file report](docs/native/STATUS.md), [installation / Quest launch guide](docs/native/QUEST-LAUNCH.md), and [actual verification results](docs/native/BUILD-RESULTS.md). The next gate is Editor import + real Android build + physical Quest validation, before further web polish.
+
 ## Phase 4 daily experience
 The feature branch adds a shared deterministic daily check-in and recommendation card, history-backed greeting, quick choice, conservative safety exclusions and compatible alternatives. The current reviewed catalog remains 65–135 second equipment-free starters; 5/10/20/30 minutes are time budgets, not fabricated programs. A requested strength session is explicitly disclosed as unavailable. See [Phase 4 delivery](docs/phase4/DELIVERY.md).
 
 ## Phase 2 A/B additions
-Offline first-use setup now has authored Unity presentation and tested product rules: EN/TR setup, original Sol/Mira/Atlas development coach presets, appearance/personality selection, optional fitness preferences, seated filtering, safety acknowledgement and versioned local profile save/export/reset. No new dependencies were installed. Hands, voice, production character art and Unity/device validation remain outstanding. Phase 1 workout cues stay English, as disclosed during setup.
+Offline first-use setup now has authored Unity presentation and tested product rules: EN/TR setup, original Sol/Mira/Atlas development coach presets, appearance/personality selection, optional fitness preferences, seated filtering, safety acknowledgement and versioned local profile save/export/reset. No new dependencies were installed. Hand adapter compilation/device acceptance, voice, production character art and Unity/device validation remain outstanding. Phase 1 workout cues stay English, as disclosed during setup.
 
 See [Phase 2 delivery](docs/phase2/DELIVERY.md), [architecture](docs/phase2/ARCHITECTURE.md), [UX](docs/phase2/UX.md), [privacy](docs/phase2/PRIVACY.md) and [store readiness](docs/phase2/STORE-READINESS.md). Milestone C and later runtime work are gated on A/B acceptance.
 
@@ -28,7 +33,7 @@ Run `bash tools/run-web-simulation.sh`, then open [localhost:5078](http://127.0.
 ## Included
 - Platform-independent workout and deterministic coach state machines.
 - Exercise selection, introduction, work/rest intervals, pause/resume, abort and completion summary.
-- Scene-generation source for a passthrough underlay, a stylized animated coach, visible written guidance, gaze/trigger buttons and history.
+- Scene-generation source for a passthrough underlay, a stylized animated coach, visible written guidance, controller-ray/trigger buttons and a manually configured hand-pointer adapter and history.
 - Fail-closed platform gate, manual clear-space confirmation, B/Y pause, pause-first exit confirmation.
 - Local versioned profile and session files, interruption checkpoints, manual repetition/load logs, history deletion.
 - Headset-free domain harness, Unity EditMode tests and GitHub domain CI.

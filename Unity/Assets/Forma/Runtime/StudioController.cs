@@ -56,14 +56,15 @@ namespace Forma.Runtime
         LocalProfile profile;
         WorkoutMachine workout;
         SessionRecord record;
+        bool storageReady;
         bool focused=true,appPaused,deletePending,exitPending;
         string message="";
         string entryExercise="march";
         double last;
         void Start()
         {
-            store=new LocalStore(Path.Combine(Application.persistentDataPath,"forma-v1"));
-            try { profile=store.LoadProfile(); } catch (Exception e) when (StorageError(e)) { profile=new LocalProfile(); message="Profile unavailable; using defaults."; }
+            profile=new LocalProfile();
+            try { store=new LocalStore(Path.Combine(Application.persistentDataPath,"forma-v1")); storageReady=true; profile=store.LoadProfile(); } catch (Exception e) when (StorageError(e)) { profile=new LocalProfile(); message="Profile unavailable; using defaults."; }
             CreateWorkout();
             marchButton.Click=()=>Select(true);
             shoulderButton.Click=()=>Select(false);
@@ -119,11 +120,12 @@ namespace Forma.Runtime
             if (march) profile.selectMarch=!profile.selectMarch; else profile.selectShoulders=!profile.selectShoulders;
             if (!profile.selectMarch && !profile.selectShoulders) { if (march && Allowed("shoulders")) profile.selectShoulders=true; else if (!march && Allowed("march")) profile.selectMarch=true; else { if(march)profile.selectMarch=true;else profile.selectShoulders=true; } }
             CreateWorkout(); record=null;
-            try { store.SaveProfile(profile); } catch (Exception e) when (StorageError(e)) { message="Could not save exercise preferences."; }
+            try { if(storageReady)store.SaveProfile(profile); } catch (Exception e) when (StorageError(e)) { message="Could not save exercise preferences."; }
         }
         void StartWorkout()
         {
             if (!Editable) return;
+            if(!storageReady){message="Local storage unavailable. Restart after freeing storage; workout cannot start.";return;}
             if(onboarding!=null && !onboarding.ReadyForWorkout){message="Finish setup before starting a workout.";return;}
             if(daily!=null && !daily.CanStart(workout.Plan.Id)){message="Review today's compatible recommendation before starting.";return;}
             if(!workoutAvailable){message="No compatible starter session. Edit movement preferences; no workout has started.";return;}
@@ -207,6 +209,7 @@ namespace Forma.Runtime
         bool Persist()
         {
             if (record==null) return true;
+            if(!storageReady)return false;
             record.activeSeconds=workout.ActiveSeconds; record.completedSets=workout.CompletedSets;
             bool terminal=workout.State==WorkoutState.Completed || workout.State==WorkoutState.Aborted;
             if(terminal && record.outcome!=workout.State.ToString())safety.EnvironmentConfirmed=false;
@@ -217,6 +220,7 @@ namespace Forma.Runtime
         }
         void RefreshHistory()
         {
+            if(!storageReady){history.text="Local storage unavailable; workout start disabled.";return;}
             try
             {
                 var rows=store.Load(); var text=new StringBuilder("LOCAL SESSION HISTORY\n");
@@ -234,6 +238,7 @@ namespace Forma.Runtime
         }
         void Delete()
         {
+            if(!storageReady){message="Local storage unavailable.";return;}
             if (!Editable) { message="End the session before deleting history."; return; }
             if (!deletePending) { deletePending=true; return; }
             try { store.DeleteAll(); onboarding?.DeleteProductProfile();

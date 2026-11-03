@@ -1,10 +1,13 @@
 {
-  "verifiedOn": "2026-10-31",
+  "verifiedOn": "2026-11-02",
   "unityEditor": "6000.3.27f2",
   "packages": {
-    "com.unity.xr.openxr": "1.16.1",
+    "com.unity.xr.openxr": "1.17.0",
     "com.unity.test-framework": "1.4.6",
-    "com.meta.xr.sdk.core": "207.0.0"
+    "com.meta.xr.sdk.core": "207.0.1"
   },
-  "note": "Requested pins from official documentation, not a resolved Unity manifest or proven compatibility matrix. Confirm Meta package.json version after authenticated import; preserve actual transitive versions in Unity-generated packages-lock.json."
+  "note": "Requested pins only, NOT an installed/tested compatibility matrix. Meta/Core and OpenXR metadata verified against official registries. XR Hands is declared by Core 207.0.1. Only Unity may generate packages-lock.json; validate resolved versions, licenses and Quest hardware before accepting this baseline.",
+  "metaCoreDeclaredDependency": {
+    "com.unity.xr.hands": "1.7.2"
+  }
 }

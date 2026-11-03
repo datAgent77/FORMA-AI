@@ -1,3 +1,5 @@
+> Native setup priority: follow [the current native Quest guide](native/QUEST-LAUNCH.md). Older package pins below are historical; use `config/packages.required.json` and commit an actual Editor-resolved lockfile. No native build has been verified.
+
 # Unity, packages and Quest setup
 
 ## Verified baseline — 2026-10-31

@@ -13,6 +13,16 @@ static class Program
     { bool threw=false;try{action();}catch(T){threw=true;}Check(threw,name); }
     static void Main()
     {
+        var latch=new PointerActivationLatch();
+        Check(!latch.Update(true,true,"right"),"held trigger at acquisition does not select");
+        Check(!latch.Update(true,false,"right"),"release arms pointer");
+        Check(latch.Update(true,true,"right"),"fresh press selects once");
+        Check(!latch.Update(true,true,"right"),"held press does not repeat");
+        Check(!latch.Update(false,false,null),"tracking loss invalidates pointer");
+        Check(!latch.Update(true,true,"right"),"tracking recovery cannot select while held");
+        Check(!latch.Update(true,false,"right") && latch.Update(true,true,"right"),"release after recovery permits fresh selection");
+        Check(!latch.Update(true,true,"left"),"switching held input source cannot select");
+        Check(!latch.Update(true,false,"left") && latch.Update(true,true,"left"),"new source release and press selects");
         var catalog=new CoachCatalog(JsonSerializer.Deserialize<CoachCatalogDocument>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Coaches.json")),Json));
         Check(catalog.All.Count==3,"three real data-driven coach presets");
         var original=catalog.Get("sol");original.displayName="mutated";original.languages[0]="xx";

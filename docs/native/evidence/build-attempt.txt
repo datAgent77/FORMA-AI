@@ -1,0 +1,34 @@
+{
+  "repo": "/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI",
+  "editor": null,
+  "editorProject": false,
+  "editorVersionFile": null,
+  "manifest": false,
+  "packageLock": false,
+  "requestedDependencies": {},
+  "resolvedDependencies": {},
+  "scenes": [],
+  "prefabs": [],
+  "metaCount": 0,
+  "apkFiles": [],
+  "androidSdk": "/Users/saita/Library/Android/sdk",
+  "adb": "/Users/saita/Library/Android/sdk/platform-tools/adb",
+  "androidPlatforms": [
+    "android-35",
+    "android-36"
+  ],
+  "ndkVersions": [
+    "27.1.12297006"
+  ],
+  "buildInvoked": false,
+  "hardwareValidated": false,
+  "blockers": [
+    "Unity Editor executable not found",
+    "No Editor-created ProjectSettings/ProjectVersion.txt",
+    "No actual Unity Packages/manifest.json",
+    "No Unity-resolved Packages/packages-lock.json",
+    "Not resolved in project: com.meta.xr.sdk.core",
+    "Not resolved in project: com.unity.xr.openxr",
+    "Native StudioQuest scene has not been generated/saved by Unity"
+  ]
+}

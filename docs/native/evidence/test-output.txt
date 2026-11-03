@@ -1,0 +1,117 @@
+Executed .NET harness outputs, 2026-11-02. NOT Unity/Android results.
+
+PASS unsafe start denied
+PASS start is single-use
+PASS introduction countdown
+PASS intro enters work
+PASS pause freezes time
+PASS resume needs safety
+PASS work enters rest
+PASS rest advances set
+PASS exercise rollover
+PASS complete exact workout
+PASS terminal state is stable
+PASS overshoot stops at completion
+PASS abort paused session
+PASS zero rest cannot stall
+PASS reject NaN clock
+PASS reject invalid clock -1
+PASS reject invalid clock ∞
+PASS reject invalid clock -∞
+PASS reject empty selection
+PASS safety all ready
+PASS passthrough required
+PASS tracking required
+PASS focus required
+PASS physical confirmation required
+PASS coach ready
+PASS coach introduction
+PASS coach guidance
+PASS coach rest
+PASS coach pause
+PASS coach celebrates
+PASS single selected exercise
+31 domain assertions passed.
+
+PASS held trigger at acquisition does not select
+PASS release arms pointer
+PASS fresh press selects once
+PASS held press does not repeat
+PASS tracking loss invalidates pointer
+PASS tracking recovery cannot select while held
+PASS release after recovery permits fresh selection
+PASS switching held input source cannot select
+PASS new source release and press selects
+PASS three real data-driven coach presets
+PASS coach catalog snapshots are isolated
+PASS unknown coach rejected
+PASS duplicate coach rejected
+PASS personality preserves shared safety introduction
+PASS personality cannot replace exercise safety guidance
+PASS movement exclusion localized en Undisclosed
+PASS movement exclusion localized en AvoidLowerBody
+PASS movement exclusion localized en AvoidShoulders
+PASS movement exclusion localized en AvoidLowerBody, AvoidShoulders
+PASS movement exclusion localized tr Undisclosed
+PASS movement exclusion localized tr AvoidLowerBody
+PASS movement exclusion localized tr AvoidShoulders
+PASS movement exclusion localized tr AvoidLowerBody, AvoidShoulders
+PASS default profile valid with no sensitive data
+PASS nonfinite audio rejected
+PASS unsupported locale rejected
+PASS unknown limitation flag rejected
+PASS finish/back invalid from welcome
+PASS welcome to coach
+PASS invalid edit cannot mutate draft
+PASS coach and supported language selectable
+PASS draft getter cannot mutate flow
+PASS optional profile can be skipped and data cleared
+PASS safety cannot be skipped
+PASS both safety and space confirmation required
+PASS review requires complete safety confirmation
+PASS interruption clears stale safety before finish
+PASS save failure cannot complete onboarding
+PASS retry commits profile before completing onboarding
+PASS complete state rejects edits and navigation
+PASS returning profile never restores physical-space confirmation
+PASS settings reopens explicit flow
+PASS offline beginner recommendation
+PASS seated profile gets seated guidance without standing march
+PASS no compatible movement fails closed
+PASS movement limitation filters lower body
+PASS recommendation safety validator rejects incompatible exercise
+PASS unknown generated exercise rejected even with tracking
+PASS known ID cannot smuggle unreviewed exercise instructions
+PASS unsupported dose rejected
+PASS offline dialogue sol
+PASS offline dialogue mira
+PASS offline dialogue atlas
+PASS offline fallback never activates microphone or voice
+PASS safety and deletion never paywalled Free
+PASS safety and deletion never paywalled Pro
+PASS safety and deletion never paywalled Premium
+PASS free mock cannot grant AI feature
+PASS premium development mock only
+PASS missing product profile
+PASS actual file repository survives reload
+PASS export reflects recorded profile
+PASS atomic replacement leaves no temp file
+PASS future schema explicitly identified
+PASS future schema cannot be silently overwritten
+PASS unknown profile bytes preserved
+PASS corrupt profile recognized
+PASS corrupt profile needs explicit reset
+PASS missing schema never treated as current profile
+PASS delete resets product profile
+PASS reset allows fresh save
+71 product assertions passed.
+
+1054 adaptive assertions passed across 480 recommendation matrix cases.
+
+
+Roslyn C#9: Parsed 35 C# files; syntax only, not Unity semantic compilation.
+Python source invariants and bash -n passed.
+Unity EditMode/PlayMode: NOT RUN. Android BuildPipeline: NOT INVOKED. Quest: NOT TESTED.
+
+Secondary existing web regression: 42 tests passed, 0 failed. NOT Unity/Quest evidence.
+ADB device inventory: List of devices attached (empty).

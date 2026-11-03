@@ -16,3 +16,5 @@ UserSettings/
 TestResults/
 **/bin/
 **/obj/
+
+unity-create.log
