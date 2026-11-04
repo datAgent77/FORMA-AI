@@ -18,3 +18,7 @@ TestResults/
 **/obj/
 
 unity-create.log
+
+# Python tooling caches
+__pycache__/
+*.py[cod]
