@@ -1,0 +1,26 @@
+{
+  "width": 162,
+  "height": 536,
+  "frames": 9,
+  "fps": 30,
+  "crop": [
+    216,
+    330,
+    378,
+    866
+  ],
+  "source": "Pexels 6525515 / Polina Tankilevitch",
+  "processing": "Local RVM v1.0.0 matting; frames 17\u201325 only, small-step excerpt; no camera or user footage.",
+  "alphaLayout": "rgb-left-alpha-right",
+  "encodedFps": 15,
+  "loopFrames": 18,
+  "loopSeconds": 1.2,
+  "sourceFrames": [
+    17,
+    25
+  ],
+  "volumetric": false,
+  "footPaddingPixels": 14,
+  "bodyPixelHeight": 510,
+  "targetBodyHeightMetres": 1.75
+}

@@ -1,0 +1,24 @@
+{
+  "createdOn": "2026-11-04",
+  "video": {
+    "sourcePage": "https://www.pexels.com/video/woman-warming-up-6525515/",
+    "download": "https://videos.pexels.com/video-files/6525515/6525515-hd_1080_1920_30fps.mp4",
+    "creator": "Polina Tankilevitch",
+    "license": "Pexels License",
+    "licenseUrl": "https://www.pexels.com/license/",
+    "sourceSha256": "bb77ccfd5327dd1f42bbe8c382d37c80d8430dd87c1345577c91e82f06696bd1",
+    "edits": "Frames 17\u201325 isolated by local RVM v1.0.0, cropped, played forward/backward at 15fps to retain a small step; single RGB+alpha H.264 stream. No original audio. Not a complete exercise instruction film.",
+    "endorsement": "No endorsement or trainer certification is implied.",
+    "offlineMattingTool": "https://github.com/PeterL1n/RobustVideoMatting (GPL-3.0; used only offline, no model/tool shipped in app)"
+  },
+  "generatedAssets": {
+    "room-photo.png": "AI-generated photographic architectural background with built-in image_gen. Example room only; never actual passthrough.",
+    "dumbbell-glove.png": "AI-generated transparent simulated foreground prop. No tracking data; hidden in XR and active/paused exercise."
+  },
+  "files": {
+    "coach-video.json": "8533e3ffea6317dabb4e799b85b388a01f06c4a0e38c431306f818c6e09e2d99",
+    "room-photo.png": "b94b250bbab1e878e14d9d95b54e415e122b587d06e2c1d3d14fc2d6a05397fe",
+    "coach-packed.mp4": "147b021892c0fd2c677b5b66de0a18ad77bbae17a2852c2bd2d1d9c7299a9a6c",
+    "dumbbell-glove.png": "5b9b1c8c00100f2c5940738a11f208acdaa9e9cb6a6783770ae318a743ba6ad0"
+  }
+}
