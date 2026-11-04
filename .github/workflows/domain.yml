@@ -13,6 +13,8 @@ jobs:
       - run: dotnet run --project tests/DomainHarness/DomainHarness.csproj --configuration Release
       - run: dotnet run --project tests/ProductHarness/ProductHarness.csproj --configuration Release
       - run: dotnet run --project tests/AdaptiveHarness/AdaptiveHarness.csproj --configuration Release
+      - run: dotnet run --project tests/FoundationHarness/FoundationHarness.csproj --configuration Release
+      - run: python3 tests/test_native_preflight.py
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

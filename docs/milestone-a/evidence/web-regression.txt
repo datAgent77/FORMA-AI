@@ -1,0 +1,63 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  WebSimulation -> /Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/tools/WebSimulation/bin/Release/net8.0/WebSimulation.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.98
+✔ browser assets serve locally with no remote dependencies (114.237041ms)
+✔ simulation begins with shared welcome and unconfirmed space (79.789458ms)
+✔ setup rejects missing safety checks and preserves completion gate (30.7775ms)
+✔ optional profile skip clears volunteered fields without erasing posture (12.146667ms)
+✔ write failure keeps review open; retry persists actual C# profile repository (29.746209ms)
+✔ onboarding focus interruption invalidates both physical confirmations (17.685125ms)
+✔ seated profile uses seated shoulder guidance and excludes standing march (15.801125ms)
+✔ no compatible starter movement fails closed (19.066833ms)
+✔ pause freezes test clock; resume requires fresh explicit space confirmation (18.736458ms)
+✔ focus loss pauses and recovery never auto-resumes (29.493791ms)
+✔ tracking loss pauses and recovery never auto-resumes (26.027041ms)
+✔ passthrough loss pauses and recovery never auto-resumes (19.040666ms)
+✔ shared workout completes exactly and recorded totals survive setup editing (42.606375ms)
+✔ exit pauses first and confirms second; returning cannot start automatically (21.268625ms)
+✔ reset requires confirmation and cannot delete an active session (17.905875ms)
+✔ browser sessions remain isolated (2.961917ms)
+✔ invalid field and invalid preference cannot mutate valid profile (4.6195ms)
+✔ test clock rejects invalid or excessive elapsed time (10.447875ms)
+✔ cross-origin and simple write requests are rejected (1.058ms)
+✔ export is labeled synthetic and includes only the current browser session (11.217875ms)
+✔ exercise selection uses the shared plan and never allows an empty workout (13.644833ms)
+✔ completion clears physical-space confirmation before the next session (12.674291ms)
+✔ daily check-in and recommendation source assets are served (86.291625ms)
+✔ daily recommendation requires confirmed physical space (141.759ms)
+✔ low energy selects a truthful short gentle alternative (27.270291ms)
+✔ unsupported strength request is disclosed rather than fabricated (12.345542ms)
+✔ high energy never increases starter dose or invents equipment (21.424875ms)
+✔ quick choice cannot discard a reported safety concern (14.09025ms)
+✔ a safety concern during movement pauses and blocks resume (23.717958ms)
+✔ spatial changes invalidate confirmation and exclude standing steps (19.176084ms)
+✔ unknown alternative cannot bypass the allowlist (24.852542ms)
+✔ greeting and reflection use actual saved completions after relaunch (34.929792ms)
+✔ same-version comparisons are truthful when there is no increase (24.49975ms)
+✔ recent recorded participation changes default without creating physiological load (51.573542ms)
+✔ invalid readiness cannot overwrite a valid input (13.598917ms)
+✔ check-in concern and energy are not included in persistent/exported records (11.757291ms)
+✔ WebXR assets and pinned local renderer are available (114.536333ms)
+✔ unsupported browser is reported without fabricating a session (1.535583ms)
+✔ insecure contexts are rejected before capability access (0.446125ms)
+✔ requestMR uses actual immersive-ar and local-floor with no VR fallback (2.947833ms)
+✔ missing clear-space or equipment-free confirmation never requests XR (1.632084ms)
+✔ opaque sessions cannot be mistaken for passthrough (0.104125ms)
+✔ reference studio serves a real locally hosted rigged GLB with license and model loaders (58.545292ms)
+✔ reference timer consumes shared interval duration, including pause and rest (56.506959ms)
+✔ recorded coach stops for pause, rest, offline, visibility loss and reduced motion (0.414333ms)
+✔ photographic demo serves local packed video, alpha metadata and generated assets (19.684375ms)
+ℹ tests 46
+ℹ suites 0
+ℹ pass 46
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8370.794167

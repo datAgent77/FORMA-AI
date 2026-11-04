@@ -1,0 +1,19 @@
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(41,43): error CS1010: Newline in constant
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(41,80): error CS1003: Syntax error, ':' expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(42,4): error CS1026: ) expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(42,4): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(42,19): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(42,31): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(43,1): error CS1010: Newline in constant
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(43,10): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(44,17): error CS1010: Newline in constant
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(44,18): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(45,13): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(45,39): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(46,26): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(46,37): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(46,41): error CS1001: Identifier expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(46,41): error CS1002: ; expected
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(47,1): error CS1010: Newline in constant
+/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/Unity/Assets/Forma/Runtime/FoundationController.cs(47,10): error CS1002: ; expected
+Parsed 41 C# files; syntax only, not Unity semantic compilation.

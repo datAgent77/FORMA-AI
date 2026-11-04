@@ -5,6 +5,9 @@ Original tagline: Your Real Workout. Your Virtual Universe.
 
 Phase 0/1 source foundation for an offline, mixed-reality fitness studio on Meta Quest 3 and Quest 3S. Two selectable, equipment-free movements: gentle marching in place and shoulder rolls. Each has two 20-second sets, separated by 15-second rests. Selecting both gives a 135-second session including a 10-second introduction; no trailing rest.
 
+## Active native mission — Milestone A only
+See the [required native audit](docs/FORMA_NATIVE_XR_AUDIT.md), [A implementation/test report](docs/milestone-a/REPORT.md) and [A setup / Quest verification](docs/milestone-a/QUEST-FOUNDATION.md). **A is BLOCKED on actual Editor import, package resolution, scene generation, Android build and device validation.** New foundation source does not constitute a working native scene. B–E wait for user review.
+
 ## Status — read first
 Unity is not installed on the authoring host. This repository contains authored C# source, a real-Editor scene builder, tests, and setup/build instructions. **It is not yet an Editor-generated Unity project, a compiled Unity application, or a hardware-validated experience.** No `.unity`, `.meta`, ProjectSettings, package lockfiles or APKs have been fabricated. The definition of success remains unverified until the Quest acceptance checklist passes.
 

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace Forma.Runtime
 {
-    public sealed class StudioController : MonoBehaviour
+    public sealed class StudioController : MonoBehaviour,ISafePause
     {
         public StudioPlatform platform;
         public OnboardingController onboarding;

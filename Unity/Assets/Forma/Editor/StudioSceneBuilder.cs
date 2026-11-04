@@ -105,24 +105,24 @@ namespace Forma.Editor
             AssetDatabase.SaveAssets();
             Debug.Log("Created "+path+" using the Unity Editor. Review XR settings before building.");
         }
-        static TextMesh Text(Transform parent,string name,Vector3 position,string text,float size)
+        internal static TextMesh Text(Transform parent,string name,Vector3 position,string text,float size)
         {
             var go=new GameObject(name); go.transform.SetParent(parent,false); go.transform.localPosition=position;
             var tm=go.AddComponent<TextMesh>(); tm.text=text; tm.fontSize=64; tm.characterSize=size;
             tm.anchor=TextAnchor.UpperLeft; tm.color=new Color(0.9f,0.98f,0.96f);
             return tm;
         }
-        static StudioButton Button(Transform parent,string label,float x,float y,float width,bool stop=false)
+        internal static StudioButton Button(Transform parent,string label,float x,float y,float width,bool stop=false,float depth=2.8f)
         {
             var go=GameObject.CreatePrimitive(PrimitiveType.Cube); go.name=label; go.transform.SetParent(parent,false);
-            go.transform.localPosition=new Vector3(x,y,2.8f); go.transform.localScale=new Vector3(width,0.16f,0.035f);
+            go.transform.localPosition=new Vector3(x,y,depth); go.transform.localScale=new Vector3(width,0.16f,0.035f);
             go.GetComponent<Renderer>().sharedMaterial=Material(stop?new Color(0.45f,0.08f,0.06f):new Color(0.025f,0.12f,0.13f));
             var b=go.AddComponent<StudioButton>();
             // Parent label to panel rather than scaled collider to keep font proportions.
-            b.Label=Text(parent,label+" Label",new Vector3(x-width/2+0.025f,y+0.033f,2.772f),label,width>1?0.023f:0.021f);
+            b.Label=Text(parent,label+" Label",new Vector3(x-width/2+0.025f,y+0.033f,depth-.028f),label,width>1?0.023f:0.021f);
             return b;
         }
-        static Material Material(Color color)
+        internal static Material Material(Color color)
         {
             var shader=Shader.Find("Unlit/Color");
             if (shader==null) throw new InvalidOperationException("Use the Built-in Render Pipeline template; Unlit/Color shader missing.");

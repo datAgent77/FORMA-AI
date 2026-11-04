@@ -8,6 +8,9 @@ namespace Forma.Runtime
     {
         public StudioController controller;
         public Camera view;
+        public MonoBehaviour pauseReceiver;
+        public bool PointerAvailable { get; private set; }
+        StudioButton hovered;
         public Transform trackingSpace;
         public SpatialInputSource hands;
         public LineRenderer ray;
@@ -18,20 +21,27 @@ namespace Forma.Runtime
         {
             bool available=TryController(out SpatialPointerSample sample,out bool stop);
             if(!available && hands!=null)available=hands.TrySample(out sample);
-            if(stop && !lastStop)controller.Pause();
+            if(stop && !lastStop)PauseTarget();
             lastStop=stop;
-            if(hadPointer && !available)controller.Pause();
+            if(hadPointer && !available)PauseTarget();
             hadPointer=available;
+            PointerAvailable=available;
+#if UNITY_EDITOR
+            if(view!=null)PointerAvailable=true; // Mouse only in explicitly labelled Editor simulation.
+#endif
+            StudioButton nextHover=null;
             bool click=activation.Update(available,sample.Pressed,sample.SourceId);
             if(ray!=null)ray.enabled=available;
             if(available)
             {
                 bool hit=Physics.Raycast(sample.Ray,out RaycastHit target,8);
                 if(ray!=null){ray.SetPosition(0,sample.Ray.GetPoint(0.1f));ray.SetPosition(1,hit?target.point:sample.Ray.GetPoint(3));}
-                if(click && hit)target.collider.GetComponent<StudioButton>()?.Invoke();
+                if(hit)nextHover=target.collider.GetComponent<StudioButton>();
+                if(click)nextHover?.Invoke();
             }
+            SetHover(nextHover);
 #if UNITY_EDITOR
-            if(Input.GetKeyDown(KeyCode.Space))controller.Pause();
+            if(Input.GetKeyDown(KeyCode.Space))PauseTarget();
             if(Input.GetMouseButtonDown(0) && view!=null)
             {
                 var mouse=view.ScreenPointToRay(Input.mousePosition);
@@ -55,10 +65,12 @@ namespace Forma.Runtime
                 if(found && !pressed)continue;
                 var origin=trackingSpace!=null?trackingSpace.TransformPoint(position):position;
                 var direction=trackingSpace!=null?trackingSpace.TransformDirection(rotation*Vector3.forward):rotation*Vector3.forward;
-                sample=new SpatialPointerSample(new Ray(origin,direction),pressed,node.ToString());found=true;
+                sample=new SpatialPointerSample(new Ray(origin,direction),pressed,node==XRNode.RightHand?"controller-right":"controller-left");found=true;
             }
             return found;
         }
-        void OnDisable(){activation.Update(false,false,null);hadPointer=false;lastStop=false;if(ray!=null)ray.enabled=false;}
+        void PauseTarget(){if(pauseReceiver!=null && pauseReceiver is ISafePause receiver)receiver.Pause();else controller?.Pause();}
+        void SetHover(StudioButton next){if(hovered==next)return;if(hovered!=null)hovered.SetHighlighted(false);hovered=next;if(hovered!=null)hovered.SetHighlighted(true);}
+        void OnDisable(){PauseTarget();SetHover(null);PointerAvailable=false;activation.Update(false,false,null);hadPointer=false;lastStop=false;if(ray!=null)ray.enabled=false;}
     }
 }
