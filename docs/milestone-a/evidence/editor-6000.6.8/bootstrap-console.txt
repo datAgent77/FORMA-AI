@@ -1,0 +1,1 @@
+tools/bootstrap-unity.sh: line 11: 44633 Killed: 9               "$UNITY_EDITOR" -batchmode -quit -createProject "$target" -logFile "$repo/unity-create.log"

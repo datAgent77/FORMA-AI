@@ -1,0 +1,18 @@
+[
+  {
+    "itemName": "webgl",
+    "itemDisplayName": "Web Build Support",
+    "productName": "Unity 6.6",
+    "sourceSizeinBytes": 2105233330,
+    "type": "editorModule",
+    "status": "install-queued"
+  },
+  {
+    "itemName": "documentation",
+    "itemDisplayName": "Documentation",
+    "productName": "Unity 6.6",
+    "sourceSizeinBytes": 470250280,
+    "type": "editorModule",
+    "status": "install-queued"
+  }
+]

@@ -1,0 +1,2 @@
+/Applications/Unity/Hub/Editor/6000.6.8f1/Unity.app: invalid Info.plist (plist or signature have been modified)
+In architecture: arm64

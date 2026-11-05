@@ -1,5 +1,8 @@
 # FORMA native XR audit — 2026-11-04
 
+> Current continuation: an incomplete Unity 6000.6.8f1 installation is now present; real creation attempt failed before a project/log was produced. See [Editor recovery findings](milestone-a/EDITOR-RECOVERY.md). The initial audit/test results below are historical, not a successful current import/build.
+
+
 Baseline: `7026878` (`feature/photographic-video-studio`), clean before this audit. **No real Editor-created Unity project exists in this checkout.** No Unity Editor/Hub was found in `/Applications`, the standard Hub Editor locations, `~/Applications` or PATH. This finding was reported to the user before any new implementation proposal/code changes. The requested Milestone A is **BLOCKED**, not native-complete.
 
 All paths below are relative to `/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI`. [Baseline inventory](milestone-a/evidence/baseline-inventory.json) was collected before implementation changes.

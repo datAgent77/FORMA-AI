@@ -1,5 +1,8 @@
 # Milestone A report — 2026-11-04
 
+> Current continuation: an incomplete Unity 6000.6.8f1 installation is now present; real creation attempt failed before a project/log was produced. See [Editor recovery findings](EDITOR-RECOVERY.md). The initial audit/test results below are historical, not a successful current import/build.
+
+
 **Overall: BLOCKED. Native Foundation A is not complete.** There is still no Editor-created Unity project, serialized native scene, resolved Meta/OpenXR installation or APK. Unity Editor/Hub is absent from checked host locations. The source preparation below must not be described as a working native MR application.
 
 The mandatory [audit](../FORMA_NATIVE_XR_AUDIT.md) was produced before implementation changes. Baseline commit `7026878` was reported as a source seed before proposing new work. Existing C# rules, tests and browser reference assets were preserved. **Milestones B–E were not started.**

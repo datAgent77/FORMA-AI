@@ -1,0 +1,44 @@
+{
+  "repo": "/Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI",
+  "editor": "/Applications/Unity/Hub/Editor/6000.6.8f1/Unity.app/Contents/MacOS/Unity",
+  "editorBundle": "/Applications/Unity/Hub/Editor/6000.6.8f1/Unity.app",
+  "editorStructureErrors": [
+    "Unity macOS app bundle is incomplete: Contents/Info.plist is missing"
+  ],
+  "editorLaunchVerified": false,
+  "androidBuildSupport": null,
+  "diskFreeBytes": 1128230912,
+  "editorProject": false,
+  "editorVersionFile": null,
+  "manifest": false,
+  "packageLock": false,
+  "requestedDependencies": {},
+  "resolvedDependencies": {},
+  "scenes": [],
+  "prefabs": [],
+  "metaCount": 0,
+  "apkFiles": [],
+  "androidSdk": "/Users/saita/Library/Android/sdk",
+  "adb": "/Users/saita/Library/Android/sdk/platform-tools/adb",
+  "androidPlatforms": [
+    "android-35",
+    "android-36"
+  ],
+  "ndkVersions": [
+    "27.1.12297006"
+  ],
+  "requestedScene": "Unity/Assets/Forma/Scenes/FoundationQuest.unity",
+  "configurationErrors": [],
+  "buildInvoked": false,
+  "hardwareValidated": false,
+  "blockers": [
+    "Unity macOS app bundle is incomplete: Contents/Info.plist is missing",
+    "Android Build Support module is missing from the selected Unity Editor",
+    "No Editor-created ProjectSettings/ProjectVersion.txt",
+    "No actual Unity Packages/manifest.json",
+    "No Unity-resolved Packages/packages-lock.json",
+    "Not resolved in project: com.meta.xr.sdk.core",
+    "Not resolved in project: com.unity.xr.openxr",
+    "Requested native scene has not been generated/saved by Unity: Unity/Assets/Forma/Scenes/FoundationQuest.unity"
+  ]
+}

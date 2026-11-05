@@ -1,0 +1,1 @@
+Unity installation is incomplete: Contents/Info.plist is missing. Finish/repair the Editor installation in Unity Hub.

@@ -1,6 +1,6 @@
 # Milestone A — create, build and validate the native foundation
 
-**Current result: BLOCKED.** The checkout is authored source, not an imported Unity project. Do not start avatar/workout milestones to hide this gate.
+**Current result: BLOCKED.** [Latest installation/recovery findings](EDITOR-RECOVERY.md) identify the newer, incomplete 6000.6.8f1 installation; do not treat that folder as a working Editor or blindly install another copy while storage is low. The checkout is authored source, not an imported Unity project. Do not start avatar/workout milestones to hide this gate.
 
 ## Install/create the real project
 
