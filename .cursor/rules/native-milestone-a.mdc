@@ -1,8 +1,6 @@
 ---
-description: Active FORMA native mission must stop after Milestone A review
+description: Current FORMA direction is WebXR-first development
 alwaysApply: true
 ---
 
-The 2026-11-04 native product mission is currently **Milestone A only**: audit, actual Unity/project/package verification, passthrough, manual spatial safety, input and build validation. See `docs/FORMA_NATIVE_XR_AUDIT.md` and `docs/milestone-a/REPORT.md`.
-
-Stop and report after A; do not start rigged coach/Animator, five-minute session, UX/audio expansion or Island until the user reviews and authorizes the next milestone. Preserve existing shared rules and reference assets. Use PASS / FAIL / NOT TESTED / BLOCKED with evidence. A blocked Editor import/build cannot be replaced by a browser screenshot or syntax-only result. Do not fabricate Editor-generated project files.
+The user's 2026-11-05 clarification supersedes the native-only milestone instruction: develop the existing WebXR experience first. Unity work is paused, not a prerequisite. Preserve existing native sources and evidence; never call browser tests a native build or physical headset validation. Keep shared workout/business rules in C#, use explicit safety confirmation and pause/resume, and do not invent tracking, repetitions, calories or completed workouts. Work on a feature branch; do not auto-merge.

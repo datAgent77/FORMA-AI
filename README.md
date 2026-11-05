@@ -5,16 +5,16 @@ Original tagline: Your Real Workout. Your Virtual Universe.
 
 Phase 0/1 source foundation for an offline, mixed-reality fitness studio on Meta Quest 3 and Quest 3S. Two selectable, equipment-free movements: gentle marching in place and shoulder rolls. Each has two 20-second sets, separated by 15-second rests. Selecting both gives a 135-second session including a 10-second introduction; no trailing rest.
 
-## Active native mission — Milestone A only
-See the [required native audit](docs/FORMA_NATIVE_XR_AUDIT.md), [A implementation/test report](docs/milestone-a/REPORT.md) and [A setup / Quest verification](docs/milestone-a/QUEST-FOUNDATION.md). **A is BLOCKED on actual Editor import, package resolution, scene generation, Android build and device validation.** New foundation source does not constitute a working native scene. B–E wait for user review.
+## Current priority — WebXR first (2026-11-05)
+Develop the existing WebXR experience first. **Unity installation is not required** for this development loop. The local server compiles the shared C# Domain/Product/Storage source only; it does not run Unity.
 
-## Status — read first
-A Unity 6000.6.8f1 installation is now detected but incomplete/unusable (missing Info.plist and Android module); see [current Editor recovery findings](docs/milestone-a/EDITOR-RECOVERY.md). This repository contains authored C# source, a real-Editor scene builder, tests, and setup/build instructions. **It is not yet an Editor-generated Unity project, a compiled Unity application, or a hardware-validated experience.** No `.unity`, `.meta`, ProjectSettings, package lockfiles or APKs have been fabricated. The definition of success remains unverified until the Quest acceptance checklist passes.
+```bash
+FORMA_SIM_PORT=5090 bash tools/run-web-simulation.sh
+```
 
-## Native XR priority — 2026-11-02
-The consumer product is **Unity/C# on Quest 3/3S**. Web/WebXR is secondary developer tooling; browser results never establish native functionality. Native milestone is **INCOMPLETE**: this host has Android tools, but no Unity Editor or connected Quest, and no Editor-generated scene, resolved SDK or APK.
+Open [WebXR Studio](http://127.0.0.1:5090/xr.html), complete setup, confirm clear space and start. The main button guides start/pause/resume; summary and local history stay on the same page. Set `FORMA_DOTNET` if .NET 8 is outside PATH. For a real Quest Browser/USB launch, see [WebXR setup](docs/WEBXR.md), using the same port. Desktop room/media are illustrative; physical headset behavior is not yet verified.
 
-Start with the [before-change audit](docs/native/AUDIT-BEFORE.md), [current native status and file report](docs/native/STATUS.md), [installation / Quest launch guide](docs/native/QUEST-LAUNCH.md), and [actual verification results](docs/native/BUILD-RESULTS.md). The next gate is Editor import + real Android build + physical Quest validation, before further web polish.
+Native source and its blocked audit/build work remain preserved in [the native audit](docs/FORMA_NATIVE_XR_AUDIT.md). Native development is paused; browser results must never be reported as native builds or hardware validation. See [current WebXR delivery](docs/webxr-loop/DELIVERY.md).
 
 ## Phase 4 daily experience
 The feature branch adds a shared deterministic daily check-in and recommendation card, history-backed greeting, quick choice, conservative safety exclusions and compatible alternatives. The current reviewed catalog remains 65–135 second equipment-free starters; 5/10/20/30 minutes are time budgets, not fabricated programs. A requested strength session is explicitly disclosed as unavailable. See [Phase 4 delivery](docs/phase4/DELIVERY.md).
