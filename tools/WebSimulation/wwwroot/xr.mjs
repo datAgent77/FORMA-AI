@@ -1,23 +1,28 @@
 import * as THREE from './vendor/three/three.module.js';
-import {createEnvironment,createHumanCoach} from './studio-scene.mjs';
+import {createHumanCoach} from './studio-scene.mjs';
+import {createHolographicEnvironment,createHolographicStage,applyHologram} from './holographic-studio.mjs';
+import {createStudioComposer} from './studio-composer.mjs';
 import {coachPose} from './coach-motion.mjs';
 import {studioView,sessionSummary,canConfirmSpace,workoutLabel} from './studio-flow.mjs';
 import {inspectAR,requestMR,isTransparentSession} from './xr-session.mjs';
 const el=id=>document.getElementById(id),host=el('canvas-host');
 let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{el('xr-status').textContent='WebGL açılamadı. Donanım hızlandırmalı tarayıcı kullan.';throw new Error('FORMA_WEBGL_UNAVAILABLE');}
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');host.append(renderer.domElement);
-const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.05,50);camera.position.set(0,1.52,2.45);camera.lookAt(0,1.35,-1.2);
-scene.add(new THREE.HemisphereLight(0xffffff,0xb6a88f,3.2));const sun=new THREE.DirectionalLight(0xffead1,2.1);sun.position.set(2,5,3);scene.add(sun);
-const environment=createEnvironment();const preview=environment.root;scene.add(preview);renderer.setClearColor(0x000000,0);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.05,50);camera.position.set(2.65,2.25,4.8);camera.lookAt(0,1.1,-1.2);
+scene.add(new THREE.HemisphereLight(0x91c6ff,0x05091b,.9));const sun=new THREE.DirectionalLight(0x9cdeff,2.8);sun.position.set(1,4,4);scene.add(sun);scene.fog=new THREE.FogExp2(0x080f21,.035);
+const environment=createHolographicEnvironment();const preview=environment.root;scene.add(preview);renderer.setClearColor(0x000000,0);
 const content=new THREE.Group();content.position.z=-1.2;scene.add(content);
-const coach=new THREE.Group();coach.position.x=.06;content.add(coach);
+const holographicStage=createHolographicStage();content.add(holographicStage);
+const coach=new THREE.Group();coach.position.set(-.50,.03,-.12);content.add(coach);
+const composer=createStudioComposer(renderer);
 let human=null,previewPaused=false;
-createHumanCoach(coach,text=>el('asset-status').textContent=text).then(value=>{human=value;}).catch(error=>{el('asset-status').textContent='3B koç yüklenemedi; seansı başlatma.';console.error(error);});
+createHumanCoach(coach,text=>el('asset-status').textContent=text).then(value=>{human=value;applyHologram(human.avatar);el('asset-status').textContent='Canlı 3B rehber · Temsili hareketler';}).catch(error=>{el('asset-status').textContent='3B koç yüklenemedi; seansı başlatma.';console.error(error);});
 function surface(width,height,pixelsW=1024,pixelsH=512){const canvas=document.createElement('canvas');canvas.width=pixelsW;canvas.height=pixelsH;const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:texture,transparent:true}));return {mesh:m,canvas,ctx:canvas.getContext('2d'),texture};}
-const panel=surface(.75,1.25,640,1024);panel.mesh.position.set(1.16,1.24,0);content.add(panel.mesh);
+const panel=surface(.83,1.36,640,1024);panel.mesh.position.set(.78,1.38,-.20);content.add(panel.mesh);
 const cue=surface(1.55,.23,1536,230);cue.mesh.position.set(-.16,2.02,0);cue.mesh.visible=false;content.add(cue.mesh);
-const timeline=surface(2.6,.23,1536,200);timeline.mesh.position.set(.06,.12,.18);content.add(timeline.mesh);
+const timeline=surface(2.6,.23,1536,200);timeline.mesh.position.set(.06,.14,1.15);timeline.mesh.rotation.x=-.55;content.add(timeline.mesh);
 const buttons=[],rays=[],controllers=[],raycaster=new THREE.Raycaster(),rotation=new THREE.Matrix4();
 const pauseButtons=new WeakMap();
 let model=null,session=null,queue=Promise.resolve(),offline=false,localPaused=true,lastClock=performance.now(),lastFrame=performance.now(),phase=0,placed=false,lastPanel='',poseTracked=false,capability,lastTerminal=null;
@@ -28,31 +33,38 @@ function paintPanel(){
  const text=offline?'Bağlantı kesildi. Hareketi durdur.':!model?'Koçuna bağlanılıyor…':model.setup.step!=='Complete'?'Başlamadan önce kısa kurulumu tamamla.':state?.state==='Ready'?'Alanını kontrol et. Birlikte başlayalım.':model.coach?.text||'';
  const signature=JSON.stringify({text,state,setup:model?.setup?.step,language:model?.setup?.profile?.language,session:!!session,offline,space:model?.gate?.space});if(signature===lastPanel)return;lastPanel=signature;
  const c=panel.ctx;c.clearRect(0,0,640,1024);
- c.fillStyle='rgba(19,22,21,.47)';c.beginPath();c.roundRect(12,12,616,1000,270);c.fill();
+ c.fillStyle='rgba(7,22,46,.46)';c.beginPath();c.roundRect(4,4,632,1016,24);c.fill();
+ c.strokeStyle='rgba(126,226,255,.45)';c.lineWidth=2;c.stroke();
+ c.textAlign='left';c.fillStyle='#8deeff';c.font='30px sans-serif';c.fillText('FORMA / COACH',44,60);
+ c.fillStyle='#d3e7f4';c.font='32px sans-serif';c.fillText('5 dakikalık başlangıç',44,104);
  const seconds=Math.ceil(state?.remaining||0),duration=state?.intervalSeconds||1;
  const progress=!state||state.state==='Ready'?1:Math.max(0,Math.min(1,seconds/duration));
- c.lineWidth=18;c.lineCap='round';c.strokeStyle='rgba(255,255,255,.13)';c.beginPath();c.arc(320,330,268,-Math.PI*.9,Math.PI*.9);c.stroke();
- c.strokeStyle='#edcf63';c.beginPath();c.arc(320,330,268,-Math.PI*.9,-Math.PI*.9+Math.PI*1.8*progress);c.stroke();
- c.fillStyle='#f6f3e7';c.textAlign='center';c.font='500 112px sans-serif';c.fillText(state?.state&&state.state!=='Ready'?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'Hazır',320,254);
- c.fillStyle='#d5d6cc';c.font='28px sans-serif';c.fillText(state?.state==='Rest'?'Dinlenme':state?.state==='Paused'?'Duraklatıldı':state?.state==='Completed'?'Tamamlandı':'Kalan süre',320,302);
+ c.lineWidth=5;c.lineCap='round';c.strokeStyle='rgba(113,231,255,.13)';c.beginPath();c.arc(320,324,148,0,Math.PI*2);c.stroke();
+ c.strokeStyle='#79f4ff';c.beginPath();c.arc(320,324,148,-Math.PI/2,-Math.PI/2+Math.PI*2*progress);c.stroke();
+ c.fillStyle='#ebfcff';c.textAlign='center';c.font='500 78px sans-serif';c.fillText(state?.state&&state.state!=='Ready'?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'05:00',320,328);
+ c.fillStyle='#9cb9d5';c.font='30px sans-serif';c.fillText(state?.state==='Rest'?'Dinlenme':state?.state==='Paused'?'Duraklatıldı':state?.state==='Completed'?'Tamamlandı':!state||state.state==='Ready'?'Seans süresi':'Aralık süresi',320,372);
+ c.textAlign='left';c.fillStyle='#8deeff';c.font='25px sans-serif';c.fillText(workoutLabel(state?.state),44,555);
+ c.fillStyle='#edfaff';c.font='36px sans-serif';wrap(c,state?.exerciseName||'Birlikte başlayalım.',44,609,540,43);
+ c.fillStyle='#97b8ce';c.font='30px sans-serif';wrap(c,state?.state==='Ready'||!state?'Küçük adımlar. Rahat bir tempo.':text,44,700,540,35);
  const terminalSummary=sessionSummary(model);
 
  if(terminalSummary){
-  c.fillStyle='#fff';c.font='72px sans-serif';c.fillText(String(terminalSummary.workSeconds),320,472);
-  c.font='30px sans-serif';c.fillText('saniye çalışma',320,518);
+  c.clearRect(24,490,592,365);c.fillStyle='rgba(7,22,46,.8)';c.fillRect(24,490,592,365);
+  c.fillStyle='#fff';c.font='72px sans-serif';c.fillText(String(terminalSummary.workSeconds),320,570);
+  c.font='30px sans-serif';c.fillText('saniye çalışma',320,610);
   c.font='64px sans-serif';c.fillText(String(terminalSummary.sets),320,638);
   c.font='30px sans-serif';c.fillText('tamamlanan set',320,680);
-  c.fillStyle='#edcf63';c.font='27px sans-serif';c.fillText(terminalSummary.completed?'Kendine zaman ayırdın.':'İstediğin anda durabilirsin.',320,766);
+  c.fillStyle='#79f4ff';c.font='27px sans-serif';c.fillText(terminalSummary.completed?'Kendine zaman ayırdın.':'İstediğin anda durabilirsin.',320,766);
  }
  // The silhouette is the same recorded video rendered as a diagram, never body tracking.
- c.fillStyle='#fff';c.font='32px sans-serif';c.fillText(`Set ${state?.set||1} / ${state?.totalSets||2}`,320,887);c.fillStyle='#bfc2b8';c.font='23px sans-serif';c.fillText('3B rehber · Ölçüm değil',320,940);panel.texture.needsUpdate=true;
- const q=cue.ctx;q.clearRect(0,0,1536,230);q.fillStyle='rgba(28,32,31,.85)';q.beginPath();q.roundRect(0,0,1536,230,26);q.fill();q.textAlign='center';q.fillStyle='#edcf63';q.font='30px sans-serif';q.fillText(state?.exerciseId==='march'?'Hafif yerinde yürüyüş':'Rahat omuz çevirme',768,54);q.fillStyle='#fff';q.font='35px sans-serif';wrap(q,text,768,112,1400,44);cue.texture.needsUpdate=true;
- const t=timeline.ctx;t.clearRect(0,0,1536,200);t.fillStyle='rgba(18,20,19,.69)';t.beginPath();t.roundRect(0,0,1536,200,24);t.fill();t.textAlign='center';
+ c.textAlign='center';c.fillStyle='#c4f7ff';c.font='32px sans-serif';c.fillText(`Set ${state?.set||1} / ${state?.totalSets||3}`,320,900);c.fillStyle='#bfc2b8';c.font='23px sans-serif';c.fillText('3B rehber · Ölçüm değil',320,940);panel.texture.needsUpdate=true;
+ const q=cue.ctx;q.clearRect(0,0,1536,230);q.fillStyle='rgba(28,32,31,.85)';q.beginPath();q.roundRect(0,0,1536,230,26);q.fill();q.textAlign='center';q.fillStyle='#79f4ff';q.font='30px sans-serif';q.fillText(state?.exerciseId==='march'?'Hafif yerinde yürüyüş':'Rahat omuz çevirme',768,54);q.fillStyle='#fff';q.font='35px sans-serif';wrap(q,text,768,112,1400,44);cue.texture.needsUpdate=true;
+ const t=timeline.ctx;t.clearRect(0,0,1536,200);t.fillStyle='rgba(6,20,43,.70)';t.beginPath();t.roundRect(0,0,1536,200,24);t.fill();t.textAlign='center';
  const entries=[...(model?.plan?.length?model.plan:model?.exercises||[]).map(e=>[e.id,e.id==='march'?'Yerinde yürüyüş':e.id==='shoulders'?'Omuz çevirme':e.name,e.sets?`${e.sets} × ${e.workSeconds} saniye`:"Seans seç"]),['summary','Seans özeti','Yerel geçmiş']];const tileWidth=1536/entries.length;
- entries.forEach(([id,name,dose],i)=>{const active=id===state?.exerciseId||(id==='summary'&&state?.state==='Completed');t.fillStyle=active?'#edcf63':'#e5e4dc';t.font='34px sans-serif';t.fillText(name,tileWidth*(i+.5),91);t.fillStyle='#afb4aa';t.font='25px sans-serif';t.fillText(dose,tileWidth*(i+.5),139);if(active){t.fillStyle='#edcf63';t.fillRect(i*tileWidth+30,176,tileWidth-60,5);}});timeline.texture.needsUpdate=true;
+ entries.forEach(([id,name,dose],i)=>{const active=id===state?.exerciseId||(id==='summary'&&state?.state==='Completed');t.fillStyle=active?'#79f4ff':'#b8d4ed';t.font='34px sans-serif';t.fillText(name,tileWidth*(i+.5),91);t.fillStyle='#afb4aa';t.font='25px sans-serif';t.fillText(dose,tileWidth*(i+.5),139);if(active){t.fillStyle='#79f4ff';t.fillRect(i*tileWidth+30,176,tileWidth-60,5);}});timeline.texture.needsUpdate=true;
  el('coach-cue').textContent=!state||state.state==='Ready'?'5 dakika · 3B stüdyo · Ekipmansız':text;
 
- el('workout-title').textContent=!state||state.state==='Ready'?'Koçunla aynı alanda.':state?.state==='Completed'?'Seans tamamlandı':state?.state==='Aborted'?'Seans sonlandırıldı':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
+ el('workout-title').textContent=!state||state.state==='Ready'?'Hareketinle aynı frekansta.':state?.state==='Completed'?'Seans tamamlandı':state?.state==='Aborted'?'Seans sonlandırıldı':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
  el('space-state').textContent=model?.gate?.space?'Alan onaylı':'Başlamak için alanını onayla';
  updateSetup();updateFlow();
 }
@@ -78,9 +90,16 @@ for(let i=0;i<2;i++){
  controller.addEventListener('select',()=>{rotation.identity().extractRotation(controller.matrixWorld);choose(new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld),new THREE.Vector3(0,0,-1).applyMatrix4(rotation));});
 }
 function place(){const cam=renderer.xr.isPresenting?renderer.xr.getCamera():camera;const position=new THREE.Vector3();cam.getWorldPosition(position);const forward=new THREE.Vector3();cam.getWorldDirection(forward);forward.y=0;if(forward.lengthSq()<.01)forward.set(0,0,-1);forward.normalize();content.position.copy(position).addScaledVector(forward,2.3);content.position.y=0;content.rotation.y=Math.atan2(-forward.x,-forward.z);placed=true;}
-function resize(){renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/host.clientHeight;camera.fov=camera.aspect<1?62:48;camera.updateProjectionMatrix();}window.addEventListener('resize',resize);resize();
+function resize(){renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/host.clientHeight;camera.fov=camera.aspect<1?53:38;camera.position.set(camera.aspect<1?1.8:1.7,2.25,camera.aspect<1?5.1:3.6);camera.lookAt(0,1.1,-1.2);camera.updateProjectionMatrix();}window.addEventListener('resize',resize);resize();
 let drag=null;
-renderer.domElement.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,moved:false};});
+let orbitYaw=0;
+renderer.domElement.addEventListener('pointerdown',e=>{if(session)return;drag={x:e.clientX,y:e.clientY,moved:false};renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(!drag||session)return;const dx=e.clientX-drag.x;if(Math.abs(dx)>2)drag.moved=true;
+ if(!drag.moved)return;orbitYaw=Math.max(-.55,Math.min(.55,orbitYaw+dx*.003));drag.x=e.clientX;
+ const narrow=camera.aspect<1,base=new THREE.Vector3(narrow?1.8:1.7,2.25,(narrow?5.1:3.6)+1.2);base.applyAxisAngle(new THREE.Vector3(0,1,0),orbitYaw);camera.position.set(base.x,base.y,base.z-1.2);camera.lookAt(0,1.1,-1.2);
+});
+renderer.domElement.addEventListener('pointercancel',()=>{drag=null;});
 renderer.domElement.addEventListener('pointerup',e=>{if(drag&&!drag.moved&&!session){const rect=renderer.domElement.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=raycaster.intersectObjects(buttons.filter(b=>b.visible),false)[0];hit?.object.userData.action();}drag=null;});
 el('confirm-space').onclick=confirmSpace;el('prepare').onclick=()=>send('dailyQuick');el('start').onclick=start;el('pause').onclick=pause;el('stop').onclick=()=>send('stop');el('reposition').onclick=()=>{place();pause();send('confirmSpace',{enabled:false});};
 el('leave-xr').onclick=async()=>{await pause();await session?.end();};
@@ -91,11 +110,11 @@ el('enter-xr').onclick=async()=>{
  try{
   requested=await requestMR(navigator.xr,{secure:isSecureContext,confirmed:el('space-confirm').checked,noEquipment:el('space-confirm').checked});
   if(!isTransparentSession(requested)){await requested.end();throw new Error('Şeffaf AR bileşimi doğrulanamadı. Opaque VR moduna geçilmedi.');}
-  session=requested;el('xr-mode').textContent='Quest WebXR · Ekipmansız';buttons.forEach(b=>b.visible=true);cue.mesh.visible=true;await pause();await send('signal',{field:'tracking',enabled:false});placed=false;poseTracked=false;preview.visible=false;scene.background=null;renderer.setClearColor(0x000000,0);
+  session=requested;el('xr-mode').textContent='Quest WebXR · Ekipmansız';buttons.forEach(b=>b.visible=true);cue.mesh.visible=true;await pause();await send('signal',{field:'tracking',enabled:false});placed=false;poseTracked=false;preview.visible=false;holographicStage.userData.setImmersive(true);scene.background=null;scene.fog=null;renderer.setClearColor(0x000000,0);
   session.addEventListener('visibilitychange',()=>{const visible=session?.visibilityState==='visible';if(!visible)pause();send('signal',{field:'focus',enabled:visible});});
-  session.addEventListener('end',()=>{session=null;lastTerminal=null;el('xr-mode').textContent='Masaüstü önizleme · Ekipmansız';buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;preview.visible=true;scene.background=new THREE.Color(0xcbd4ca);el('leave-xr').hidden=true;el('enter-xr').hidden=false;el('space-confirm').checked=false;el('enter-xr').disabled=true;pause();el('xr-status').textContent='XR oturumu kapandı. Egzersiz duraklatıldı; otomatik devam yok.';paintPanel();});
+  session.addEventListener('end',()=>{session=null;lastTerminal=null;el('xr-mode').textContent='Masaüstü önizleme · Ekipmansız';buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;preview.visible=true;holographicStage.userData.setImmersive(false);scene.background=new THREE.Color(0x080f21);scene.fog=new THREE.FogExp2(0x080f21,.035);el('leave-xr').hidden=true;el('enter-xr').hidden=false;el('space-confirm').checked=false;el('enter-xr').disabled=true;pause();el('xr-status').textContent='XR oturumu kapandı. Egzersiz duraklatıldı; otomatik devam yok.';paintPanel();});
   await renderer.xr.setSession(session);await send('signal',{field:'passthrough',enabled:true});await send('signal',{field:'focus',enabled:session.visibilityState==='visible'});el('leave-xr').hidden=false;el('enter-xr').hidden=true;el('xr-status').textContent='Gerçek WebXR immersive-ar oturumu açık. Çevreni kontrol et; görünürlük kaybında dur.';
- }catch(error){if(requested)await requested.end().catch(()=>{});session=null;el('xr-mode').textContent='Masaüstü önizleme · Ekipmansız';buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;preview.visible=true;scene.background=new THREE.Color(0xcbd4ca);el('xr-status').textContent=error.message||'WebXR AR oturumu açılamadı.';}
+ }catch(error){if(requested)await requested.end().catch(()=>{});session=null;el('xr-mode').textContent='Masaüstü önizleme · Ekipmansız';buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;preview.visible=true;holographicStage.userData.setImmersive(false);scene.background=new THREE.Color(0x080f21);scene.fog=new THREE.FogExp2(0x080f21,.035);el('xr-status').textContent=error.message||'WebXR AR oturumu açılamadı.';}
 };
 async function confirmSpace(){
  if(!canConfirmSpace({immersive:!!session,tracked:poseTracked,visible:session?.visibilityState==='visible'})){el('xr-status').textContent='Takip ve görünürlük hazır değil. Dur ve yeniden kontrol et.';return false;}
@@ -162,7 +181,7 @@ el('setup-next').onclick=async()=>{
 };
 window.addEventListener('keydown',e=>{if(e.code==='Space'&&document.activeElement?.tagName!=='INPUT'){e.preventDefault();pause();}});
 document.addEventListener('visibilitychange',()=>{if(!session){if(document.hidden)pause();send('signal',{field:'focus',enabled:!document.hidden});}});
-scene.background=new THREE.Color(0xcbd4ca);
+scene.background=new THREE.Color(0x080f21);
 renderer.setAnimationLoop((now,frame)=>{
  const dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
  if(session&&frame){const reference=renderer.xr.getReferenceSpace();const tracked=!!reference&&!!frame.getViewerPose(reference);if(tracked!==poseTracked){poseTracked=tracked;if(!tracked)pause();send('signal',{field:'tracking',enabled:tracked});}if(tracked&&!placed)place();for(const source of session.inputSources){const pressed=!!source.gamepad?.buttons[5]?.pressed;if(pressed&&!pauseButtons.get(source))pause();pauseButtons.set(source,pressed);}}
@@ -170,6 +189,6 @@ renderer.setAnimationLoop((now,frame)=>{
  human?.update(pose.phase,pose.moving,pose.exercise,pose.reduced,dt);
 
  if(now-lastClock>=250){const elapsed=(now-lastClock)/1000;lastClock=now;if(model?.workout?.isRunning&&!localPaused&&!offline&&(session?session.visibilityState==='visible':!document.hidden)){if(elapsed>1.5)pause();else send('tick',{seconds:elapsed});}}
- renderer.render(scene,camera);
+ if(session)renderer.render(scene,camera);else composer.render(scene,camera);
 });
 await readState();if(model?.workout?.isRunning)await pause();await send('signal',{field:'focus',enabled:!document.hidden});capability=await inspectAR(navigator.xr,isSecureContext);el('xr-status').textContent=capability.reason;el('enter-xr').disabled=!capability.supported||!el('space-confirm').checked;paintPanel();

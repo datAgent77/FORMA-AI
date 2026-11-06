@@ -40,7 +40,7 @@ export async function createHumanCoach(parent,onStatus){
  const gltf=await new GLTFLoader().loadAsync('/assets/coach/woman-casual.glb');
  const avatar=gltf.scene;avatar.name='Temporary rigged human coach — Quaternius';
  // Use a standing pose; no unrelated stock dance/fight animations are played.
- const clip=gltf.animations.find(a=>a.name.endsWith('Female_Standing'))||gltf.animations.find(a=>a.name.endsWith('Female_Idle'));
+ const clip=gltf.animations.find(a=>a.name.endsWith('Female_Idle'))||gltf.animations.find(a=>a.name.endsWith('Female_Standing'));
  const mixer=new THREE.AnimationMixer(avatar);if(clip){const action=mixer.clipAction(clip);action.play();mixer.update(.01);action.paused=true;}
  avatar.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(avatar),height=bounds.max.y-bounds.min.y;
  avatar.scale.multiplyScalar(1.75/height);avatar.updateMatrixWorld(true);const sized=new THREE.Box3().setFromObject(avatar);
@@ -49,7 +49,7 @@ export async function createHumanCoach(parent,onStatus){
  parent.add(avatar);onStatus('3B koç hazır · Geçici stilize model');
  const offset=(name,axis,angle)=>{const entry=rest.get(name);if(entry)entry.bone.quaternion.copy(entry.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis,angle));};
  const x=new THREE.Vector3(1,0,0),z=new THREE.Vector3(0,0,1);
- return {height:1.75,update(phase,moving,exercise,reduced,dt=.016){
+ return {avatar,height:1.75,update(phase,moving,exercise,reduced,dt=.016){
   const previous=new Map([...rest].map(([name,{bone}])=>[name,bone.quaternion.clone()]));
   for(const {bone,q} of rest.values())bone.quaternion.copy(q);
   if(moving&&!reduced){
