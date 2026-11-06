@@ -63,6 +63,13 @@ namespace Forma.Product
     }
     public static class DailyWorkoutCatalog
     {
+        public static WorkoutPlan FiveMinutePlan(ProductProfile profile)
+        {
+            if(!ProductProfile.IsValid(profile))return null;
+            var starter=ExerciseCatalog.FirstWorkout(profile);
+            if(starter==null || starter.Exercises.Count!=2 || profile.posture==Posture.Seated)return null;
+            return new WorkoutPlan("studio-five-minute-v1",starter.Exercises.Select(e=>new Exercise(e.Id,e.Name,e.Guidance,30,22,3)));
+        }
         public static ReadOnlyCollection<DailyWorkout> Available(ProductProfile profile,WorkoutSpace space)
         {
             var effective=profile.Copy();

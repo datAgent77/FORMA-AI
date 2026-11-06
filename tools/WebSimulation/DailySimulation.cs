@@ -20,6 +20,7 @@ public sealed partial class Simulation
     }
     WorkoutPlan ApprovedDailyPlan()
     {
+        if(dailyChoice=="studio-five-minute-v1")return readiness.concern==SafetyConcern.NoneReported && dailySpace.kind==SpaceKind.StandingInPlace && gate.EnvironmentConfirmed ? DailyWorkoutCatalog.FiveMinutePlan(flow.Draft):null;
         var result=DailyResult();return result.Status==DailyStatus.Ready && dailyStage=="Recommendation"?(result.Find(dailyChoice)??(dailyChoice==null?result.Primary:null))?.Plan:null;
     }
     bool ActDaily(SimulationAction a)
@@ -45,6 +46,10 @@ public sealed partial class Simulation
                 if(a.Field=="space")gate.EnvironmentConfirmed=false;
                 if(draft.concern!=SafetyConcern.NoneReported){Interrupt();notice=DailyResult().Message;}
                 return true;
+            case "dailyFive":
+                if(readiness.concern!=SafetyConcern.NoneReported || dailySpace.kind!=SpaceKind.StandingInPlace || DailyWorkoutCatalog.FiveMinutePlan(flow.Draft)==null)
+                    return Reject("The five-minute standing session requires both supported movements and no reported safety concern.");
+                dailyEnabled=true;dailyStage="Recommendation";dailyChoice="studio-five-minute-v1";return true;
             case "dailyQuick":
                 // Skip optional check-in fields, never a previously reported safety concern.
                 readiness=new DailyReadiness{skipped=true,energy=DailyEnergy.Unspecified,availableMinutes=0,concern=readiness.concern};
@@ -65,9 +70,11 @@ public sealed partial class Simulation
     {
         var p=flow.Draft;var facts=new RecordedHistory(history,DateTimeOffset.UtcNow);var result=DailyResult();
         var selected=result.Find(dailyChoice);
+        var five=dailyChoice=="studio-five-minute-v1"?DailyWorkoutCatalog.FiveMinutePlan(p):null;
+        if(five!=null)selected=new DailyWorkout("Five-minute Studio",DailyActivity.Choose,five);
         object Card(DailyWorkout w)=>w==null?null:new{id=w.Id,name=w.Name,durationSeconds=w.DurationSeconds,intensity=w.Intensity,equipment=w.Equipment,activity=w.Activity.ToString(),exercises=w.Plan.Exercises.Select(e=>e.Name)};
         var reasons=result.Reasons.ToList();
-        if(selected!=null && selected.Id!=result.Primary?.Id)reasons.Insert(0,DailyText.T(p.language,"You selected another compatible gentle option.","Başka bir uyumlu hafif seçenek seçtin."));
+        if(selected!=null && five==null && selected.Id!=result.Primary?.Id)reasons.Insert(0,DailyText.T(p.language,"You selected another compatible gentle option.","Başka bir uyumlu hafif seçenek seçtin."));
         bool terminal=workout!=null && (workout.State==WorkoutState.Completed || workout.State==WorkoutState.Aborted);
         return new {
             enabled=dailyEnabled,unsupportedStrength=readiness.activity==DailyActivity.Strength,stage=dailyStage,readiness,space=dailySpace,

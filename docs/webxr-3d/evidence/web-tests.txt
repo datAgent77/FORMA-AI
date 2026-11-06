@@ -1,0 +1,70 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  WebSimulation -> /Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/tools/WebSimulation/bin/Release/net8.0/WebSimulation.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.07
+✔ browser assets serve locally with no remote dependencies (107.966625ms)
+✔ simulation begins with shared welcome and unconfirmed space (42.7535ms)
+✔ setup rejects missing safety checks and preserves completion gate (44.510583ms)
+✔ optional profile skip clears volunteered fields without erasing posture (20.650084ms)
+✔ write failure keeps review open; retry persists actual C# profile repository (35.834291ms)
+✔ onboarding focus interruption invalidates both physical confirmations (23.031208ms)
+✔ seated profile uses seated shoulder guidance and excludes standing march (18.883666ms)
+✔ no compatible starter movement fails closed (17.980042ms)
+✔ pause freezes test clock; resume requires fresh explicit space confirmation (19.627791ms)
+✔ focus loss pauses and recovery never auto-resumes (26.246167ms)
+✔ tracking loss pauses and recovery never auto-resumes (22.482875ms)
+✔ passthrough loss pauses and recovery never auto-resumes (20.028167ms)
+✔ shared workout completes exactly and recorded totals survive setup editing (34.268792ms)
+✔ exit pauses first and confirms second; returning cannot start automatically (18.102625ms)
+✔ reset requires confirmation and cannot delete an active session (18.114792ms)
+✔ browser sessions remain isolated (3.180458ms)
+✔ invalid field and invalid preference cannot mutate valid profile (3.577916ms)
+✔ test clock rejects invalid or excessive elapsed time (11.893625ms)
+✔ cross-origin and simple write requests are rejected (1.43275ms)
+✔ export is labeled synthetic and includes only the current browser session (12.0755ms)
+✔ exercise selection uses the shared plan and never allows an empty workout (12.371458ms)
+✔ completion clears physical-space confirmation before the next session (15.789625ms)
+✔ daily check-in and recommendation source assets are served (80.551833ms)
+✔ daily recommendation requires confirmed physical space (113.500917ms)
+✔ low energy selects a truthful short gentle alternative (39.304583ms)
+✔ unsupported strength request is disclosed rather than fabricated (19.186166ms)
+✔ high energy never increases starter dose or invents equipment (22.56775ms)
+✔ quick choice cannot discard a reported safety concern (16.728375ms)
+✔ a safety concern during movement pauses and blocks resume (24.010375ms)
+✔ spatial changes invalidate confirmation and exclude standing steps (17.133833ms)
+✔ unknown alternative cannot bypass the allowlist (23.295041ms)
+✔ greeting and reflection use actual saved completions after relaunch (22.088917ms)
+✔ same-version comparisons are truthful when there is no increase (20.563667ms)
+✔ recent recorded participation changes default without creating physiological load (36.846375ms)
+✔ invalid readiness cannot overwrite a valid input (13.479333ms)
+✔ check-in concern and energy are not included in persistent/exported records (14.005583ms)
+✔ primary action requires setup and separate space consent before start (0.965583ms)
+✔ paused workout never resumes from restored signals or a single space click (0.452708ms)
+✔ cancelled session summary cannot masquerade as completion or a streak (0.167125ms)
+✔ headset confirmation requires current tracking and visible session (2.9575ms)
+✔ workout completion is recorded once, restart preserves history, abort does not add completion (241.833916ms)
+✔ five-minute program runs for exactly 300 seconds including rests and freezes on pause (29.05975ms)
+✔ 3D animation uses authoritative interval time and stops for pause, focus or reduced motion (2.582791ms)
+✔ WebXR assets and pinned local renderer are available (98.520167ms)
+✔ unsupported browser is reported without fabricating a session (2.225708ms)
+✔ insecure contexts are rejected before capability access (0.466042ms)
+✔ requestMR uses actual immersive-ar and local-floor with no VR fallback (2.604709ms)
+✔ missing clear-space or equipment-free confirmation never requests XR (1.2345ms)
+✔ opaque sessions cannot be mistaken for passthrough (0.092333ms)
+✔ reference studio serves a real locally hosted rigged GLB with license and model loaders (47.692625ms)
+✔ reference timer consumes shared interval duration, including pause and rest (65.108833ms)
+✔ recorded coach stops for pause, rest, offline, visibility loss and reduced motion (0.425167ms)
+✔ photographic demo serves local packed video, alpha metadata and generated assets (16.234375ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 53
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8312.389833

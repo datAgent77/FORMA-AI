@@ -39,3 +39,21 @@ test('workout completion is recorded once, restart preserves history, abort does
  await act('advance',{seconds:11});result=await act('stop');assert.equal(result.state.workout.state,'Aborted');assert.equal(result.state.history.filter(r=>r.outcome==='Completed').length,1);assert.equal(result.state.history.filter(r=>r.outcome==='Aborted').length,1);
  if(process.env.FORMA_SIM_DATA){const {readFile}=await import('node:fs/promises');const {join}=await import('node:path');const id=cookie.split('=')[1];assert.match(id,/^[a-f0-9]{32}$/);const saved=JSON.parse(await readFile(join(process.env.FORMA_SIM_DATA,id,'simulation-history.json'),'utf8'));assert.equal(saved.length,2);assert.equal(saved.filter(r=>r.outcome==='Completed').length,1);}
 });
+test('five-minute program runs for exactly 300 seconds including rests and freezes on pause',async()=>{
+ const base=process.env.FORMA_SIM_URL||'http://127.0.0.1:5078';
+ const first=await fetch(base+'/api/state'),cookie=first.headers.get('set-cookie').split(';')[0];
+ const act=async(action,extra={})=>{const r=await fetch(base+'/api/action',{method:'POST',headers:{cookie,'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});assert.equal(r.status,200);return r.json();};
+ await act('next');await act('next');await act('next');await act('safety',{field:'ack',enabled:true});await act('safety',{field:'space',enabled:true});await act('next');await act('finish');
+ await act('dailyFive');await act('confirmSpace',{enabled:true});assert.equal((await act('start')).accepted,true);
+ let r=await act('advance',{seconds:40});assert.equal(r.state.workout.state,'Rest');
+ await act('pause');r=await act('advance',{seconds:100});assert.equal(r.state.workout.state,'Paused');assert.equal(r.state.workout.remaining,22);
+ await act('confirmSpace',{enabled:true});await act('resume');r=await act('advance',{seconds:259});assert.notEqual(r.state.workout.state,'Completed');
+ r=await act('advance',{seconds:1});assert.equal(r.state.workout.state,'Completed');assert.equal(r.state.workout.completedSets,6);assert.equal(r.state.daily.summary.activeSeconds,180);assert.equal(r.state.history.filter(x=>x.outcome==='Completed').length,1);
+});
+test('3D animation uses authoritative interval time and stops for pause, focus or reduced motion',async()=>{
+ const {coachPose}=await import('../../tools/WebSimulation/wwwroot/coach-motion.mjs');
+ const state={state:'Work',exerciseId:'shoulders',remaining:20,intervalSeconds:30};
+ const a=coachPose(state,{localPaused:false});assert.equal(a.moving,true);assert.equal(a.phase,10*Math.PI);
+ for(const options of [{localPaused:true},{localPaused:false,offline:true},{localPaused:false,visible:false},{localPaused:false,reduced:true}])assert.equal(coachPose(state,options).moving,false);
+ assert.equal(coachPose({...state,state:'Rest'},{localPaused:false}).moving,false);
+});
