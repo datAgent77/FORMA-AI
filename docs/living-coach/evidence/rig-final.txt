@@ -1,0 +1,15 @@
+(node:61472) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/tools/WebSimulation/wwwroot/vendor/three/GLTFLoader.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/saita/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Living presentation follows session, demonstration window and interruption; tracking never invents full body or hands (1.273292ms)
+✔ speech is opt-in, local-only, deduplicated, cancellable, and has no API or unsupported voice claim (0.882958ms)
+✔ real GLB: all 13 clips bind actual bones, visible distinct knee/shoulder/foot articulation and grounded skin with stable root (193.038167ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 490.02325

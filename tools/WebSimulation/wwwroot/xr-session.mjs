@@ -8,7 +8,7 @@ export async function inspectAR(xr,secure){
 export function requestMR(xr,{secure,confirmed,noEquipment}){
  if(!secure || !xr || !confirmed || !noEquipment)return Promise.reject(new Error('Açık alan, ekipmansız kullanım ve güvenli WebXR bağlamı gerekli.'));
  // Must be invoked directly inside the user gesture, before unrelated asynchronous work.
- return xr.requestSession('immersive-ar',{requiredFeatures:['local-floor']});
+ return xr.requestSession('immersive-ar',{requiredFeatures:['local-floor'],optionalFeatures:['hand-tracking']});
 }
 export function isTransparentSession(session){return session?.environmentBlendMode==='alpha-blend'||session?.environmentBlendMode==='additive';}
 // An explicit equipment-free Worlds action. Never called as an AR fallback.
@@ -18,5 +18,5 @@ export async function inspectVR(xr,secure){
 }
 export function requestWorldVR(xr,{secure,confirmed,noEquipment,sessionActive=false}){
  if(!secure||!xr||!confirmed||!noEquipment||sessionActive)return Promise.reject(new Error('Explicit equipment-free consent and no active workout are required.'));
- return xr.requestSession('immersive-vr',{requiredFeatures:['local-floor']});
+ return xr.requestSession('immersive-vr',{requiredFeatures:['local-floor'],optionalFeatures:['hand-tracking']});
 }

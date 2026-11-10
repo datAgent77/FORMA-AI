@@ -1,7 +1,7 @@
 import {coachPose} from './coach-motion.mjs';
 export const CoachPresentationStates=Object.freeze(['IDLE','GREETING','DEMONSTRATING','EXERCISING','RESTING','CELEBRATING']);
 export function coachPresentation(model,options){
- const w=model?.workout,pose=coachPose(w,options),supported=w?.exerciseId==='march'||w?.exerciseId==='shoulders';
+ const w=model?.workout,pose=coachPose(w,options),supported=['march','shoulders','knees','mobility'].includes(w?.exerciseId);
  let state='IDLE';
  if(w?.state==='Completed')state='CELEBRATING';
  else if(w?.state==='Rest'||w?.state==='Paused')state='RESTING';

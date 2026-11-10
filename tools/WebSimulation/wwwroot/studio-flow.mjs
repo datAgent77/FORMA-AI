@@ -11,8 +11,8 @@ export function studioView(model,offline=false){
 }
 export function sessionSummary(model){
  const s=model?.daily?.summary;
- if(!s||!['Completed','Aborted'].includes(s.outcome))return null;
- return {title:s.outcome==='Completed'?'Antrenmanı tamamladın':'Seans sonlandırıldı',completed:s.outcome==='Completed',workSeconds:Math.floor(s.activeSeconds||0),sets:s.sets||0,completedSessions:s.completedSessions||0,plan:(model.plan||[]).map(e=>e.id==='march'?'Yerinde yürüyüş':e.id==='shoulders'?'Omuz çevirme':e.name)};
+ if(!s||!['Completed','Aborted','Partial'].includes(s.outcome))return null;
+ return {title:s.outcome==='Completed'?'Antrenmanı tamamladın':'Seans sonlandırıldı',completed:s.outcome==='Completed',partial:s.outcome==='Partial',workSeconds:Math.floor(s.activeSeconds||0),sets:s.sets||0,completedSessions:s.completedSessions||0,plan:(model.plan||[]).map(e=>e.id==='march'?'Yerinde yürüyüş':e.id==='shoulders'?'Omuz çevirme':e.name)};
 }
 export function canConfirmSpace({immersive=false,tracked=false,visible=false}){return !immersive||(tracked&&visible);}
 

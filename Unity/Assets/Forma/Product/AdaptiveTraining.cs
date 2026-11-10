@@ -15,7 +15,7 @@ namespace Forma.Product
         public string[] reasons=Array.Empty<string>();
         public string[] evidenceSessionIds=Array.Empty<string>();
         public List<PersonalBlock> blocks=new List<PersonalBlock>();
-        public double PlannedSeconds=>blocks.Count==0?0:WorkoutMachine.IntroductionSeconds+blocks.Sum(x=>x.workSeconds+x.restSeconds)-blocks[blocks.Count-1].restSeconds;
+        public double PlannedSeconds=>blocks.Count==0?0:(rule=="LivingCoach"?LivingCoachWorkout.WelcomeSeconds:WorkoutMachine.IntroductionSeconds)+blocks.Sum(x=>x.workSeconds+x.restSeconds)-blocks[blocks.Count-1].restSeconds;
     }
     public sealed class CoachMemoryService
     {
@@ -45,7 +45,7 @@ namespace Forma.Product
             var last=known.FirstOrDefault();
             if(last!=null && last.feedback.Any(x=>x.discomfort))
             {r.status="SafetyStop";r.rule="Discomfort";r.evidenceSessionIds=new[]{last.sessionId};r.reasons=new[]{T("Son seansında rahatsızlık bildirdin. Yeni egzersiz önermiyorum. Rahatsızlık sürüyorsa dur ve uygun uzman desteği al; bu bir tanı değildir.","You reported discomfort in your last session. No new exercise is recommended. Stop and seek appropriate professional advice if it persists; this is not a diagnosis.")};return r;}
-            var selected=PersonalWorkoutCatalog.All.Where(e=>PersonalWorkoutCatalog.Allowed(e,p)).ToList();
+            var selected=PersonalWorkoutCatalog.All.Where(e=>e.Id!="knees" && PersonalWorkoutCatalog.Allowed(e,p)).ToList();
             if(p.primaryGoal==AthleteGoal.Mobility)selected=selected.Where(e=>e.Category=="Mobility").ToList();
             if(p.primaryGoal==AthleteGoal.Endurance)selected=selected.Where(e=>e.Category=="GentleCardio" || e.Id=="calf").ToList();
             if(p.primaryGoal==AthleteGoal.Strength || p.primaryGoal==AthleteGoal.MuscleDevelopment)selected=selected.Where(e=>e.Category=="StrengthFoundation" || e.Id=="mobility").ToList();

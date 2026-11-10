@@ -46,7 +46,7 @@ export function createHolographicEnvironment(){
 // Stage is attached to coach placement, including during a transparent AR session.
 export function createHolographicStage(){
  const root=new THREE.Group();root.name='Holographic training bay';
- const platform=new THREE.Mesh(new THREE.CylinderGeometry(1.65,1.72,.065,96),new THREE.MeshStandardMaterial({color:0x0a2134,metalness:.8,roughness:.23}));platform.position.set(0,-.015,0);root.add(platform);
+ const platform=new THREE.Mesh(new THREE.CylinderGeometry(1.65,1.72,.065,96),new THREE.MeshStandardMaterial({color:0x0a2134,metalness:.8,roughness:.23}));platform.position.set(0,-.0325,0);root.add(platform);
  ring(root,1.62,.022,ice);ring(root,1.54,.024,cyan,.4);ring(root,.58,.026,cyan,.8);
  glow(root,-.43,.029,0,2.8,0x14d6ff);glow(root,.7,.03,-.2,2,0x5055ff);
  // Thin projected practice lane; no real-space boundary guarantee.
@@ -68,6 +68,7 @@ export function createHolographicStage(){
  beam(shell,[point(0,.24),point(0,2.28)],0x72b8ed,.002);
  const particles=[];for(let i=0;i<90;i++)particles.push(Math.sin(i*13.17)*1.35,.22+((i*37)%100)/46,-.7-Math.abs(Math.cos(i*6.3))*.65);
  const dots=new THREE.BufferGeometry();dots.setAttribute('position',new THREE.Float32BufferAttribute(particles,3));shell.add(new THREE.Points(dots,new THREE.PointsMaterial({color:0x87ecff,size:.008,transparent:true,opacity:.5,depthWrite:false})));
+ root.userData.setLiving=enabled=>{shell.visible=!enabled;};
  root.userData.setImmersive=enabled=>{platform.visible=!enabled;};
  return root;
 }
@@ -82,7 +83,7 @@ export function applyHologram(avatar){
   const key=i=>`${Math.round(positions.getX(i)*1e7)},${Math.round(positions.getY(i)*1e7)},${Math.round(positions.getZ(i)*1e7)}`;
   for(let i=0;i<positions.count;i++){const k=key(i),v=sums.get(k)||new THREE.Vector3();v.add(new THREE.Vector3(normals.getX(i),normals.getY(i),normals.getZ(i)));sums.set(k,v);}
   for(let i=0;i<positions.count;i++){const v=sums.get(key(i)).clone().normalize();normals.setXYZ(i,v.x,v.y,v.z);}mesh.geometry=geometry;
-  const m=new THREE.MeshPhongMaterial({color:0x1b236a,emissive:0x193d90,emissiveIntensity:.55,specular:0x377da1,shininess:35,transparent:true,opacity:.48,side:THREE.DoubleSide});
+  const m=new THREE.MeshPhongMaterial({color:0x1b236a,emissive:0x193d90,emissiveIntensity:.55,specular:0x377da1,shininess:35,transparent:true,opacity:.85,side:THREE.DoubleSide});
   m.onBeforeCompile=shader=>{
    shader.vertexShader='varying vec3 vHoloPosition;\n'+shader.vertexShader;
    shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHoloPosition=(modelMatrix*vec4(transformed,1.0)).xyz;');
@@ -92,11 +93,11 @@ export function applyHologram(avatar){
     float circuit=pow(.5+.5*sin(vHoloPosition.x*78.0+sin(vHoloPosition.y*28.0)*2.0),28.0);
     float rim=pow(1.0-abs(dot(normalize(normal),normalize(vViewPosition))),2.4);
     gl_FragColor.rgb += vec3(.12,.85,1.0)*(scan*.45+circuit*.38+rim*1.3);
-    gl_FragColor.a=.32+rim*.5+scan*.1;
+    gl_FragColor.a=.76+rim*.18+scan*.04;
    `);
   };
   m.customProgramCacheKey=()=> 'forma-hologram-v2';mesh.material=m;
-  const wire=mesh.clone(false);wire.geometry=geometry;wire.material=new THREE.MeshBasicMaterial({color:0x57dfff,wireframe:true,transparent:true,opacity:.12,depthWrite:false,blending:THREE.AdditiveBlending});
+  const wire=mesh.clone(false);wire.geometry=geometry;wire.material=new THREE.MeshBasicMaterial({color:0x57dfff,wireframe:true,transparent:true,opacity:.045,depthWrite:false,blending:THREE.AdditiveBlending});
   if(mesh.isSkinnedMesh)wire.bind(mesh.skeleton,mesh.bindMatrix);wire.name='Holographic rig surface';mesh.parent.add(wire);
  }
 }

@@ -1,3 +1,5 @@
+> Latest delivery: **Living Coach — FORMA START**. Four articulated skeletal exercise animations, a 300-second guided session, optional local speech, explicit feedback and persistent results in the existing WebXR app. [Audit](docs/LIVING_COACH_AUDIT.md) · [Run, evidence, file report and Quest checklist](docs/living-coach/DELIVERY.md). Physical Quest acceptance remains unverified. This report supersedes earlier animation limitations for the four FORMA START movements; Unity remains paused.
+
 > Current delivery (2026-11-10): **Personal Coach V1, WebXR first** — persistent athlete profile, guided feedback-based workouts, explainable adaptation, actual-data progress and Studio/Forest. [Implementation, evidence, limitations and Quest launch](docs/personal-coach-v1/DELIVERY.md). Four movement animations and physical Quest validation remain outstanding. Unity remains paused.
 
 ```bash

@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three/three.module.js';
+import {createLivingAnimation} from './living-coach-animation.mjs';
 import {GLTFLoader} from './vendor/three/GLTFLoader.js';
 // All room geometry is a desktop-only backdrop. Never drawn over real passthrough.
 export function createPreviewRoom(){
@@ -45,25 +46,13 @@ export async function createHumanCoach(parent,onStatus){
  avatar.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(avatar),height=bounds.max.y-bounds.min.y;
  avatar.scale.multiplyScalar(1.75/height);avatar.updateMatrixWorld(true);const sized=new THREE.Box3().setFromObject(avatar);
  avatar.position.y-=sized.min.y;avatar.position.x-=(sized.max.x+sized.min.x)/2;
- const rest=new Map();avatar.traverse(o=>{if(o.isBone)rest.set(o.name,{bone:o,q:o.quaternion.clone()});if(o.isMesh){o.castShadow=true;o.frustumCulled=false;for(const m of (Array.isArray(o.material)?o.material:[o.material])){m.roughness=.85;if(m.name==='Shirt')m.color.set(0x26343a);if(m.name==='Pants')m.color.set(0x25292d);}}});
+ avatar.traverse(o=>{if(o.isMesh){o.castShadow=true;o.frustumCulled=false;for(const m of (Array.isArray(o.material)?o.material:[o.material])){m.roughness=.85;if(m.name==='Shirt')m.color.set(0x26343a);if(m.name==='Pants')m.color.set(0x25292d);}}});
  parent.add(avatar);onStatus('3B koç hazır · Geçici stilize model');
- const offset=(name,axis,angle)=>{const entry=rest.get(name);if(entry)entry.bone.quaternion.copy(entry.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis,angle));};
- const x=new THREE.Vector3(1,0,0),z=new THREE.Vector3(0,0,1);
- return {avatar,height:1.75,update(phase,moving,exercise,reduced,dt=.016,presentationState='IDLE'){
-  const previous=new Map([...rest].map(([name,{bone}])=>[name,bone.quaternion.clone()]));
-  for(const {bone,q} of rest.values())bone.quaternion.copy(q);
-  if(moving&&!reduced){
-  const swing=Math.sin(phase);
-  if(exercise==='march'){
-   offset('UpperLeg.L',x,Math.max(0,swing)*.28);offset('UpperLeg.R',x,Math.max(0,-swing)*.28);
-   offset('LowerLeg.L',x,-Math.max(0,swing)*.18);offset('LowerLeg.R',x,-Math.max(0,-swing)*.18);
-   offset('UpperArm.L',x,-swing*.12);offset('UpperArm.R',x,swing*.12);
-  }else{offset('Shoulder.L',z,swing*.09);offset('Shoulder.R',z,-swing*.09);offset('UpperArm.L',x,Math.cos(phase)*.07);offset('UpperArm.R',x,Math.cos(phase)*.07);}
- }
-  if(!reduced && presentationState==='CELEBRATING'){offset('UpperArm.L',z,-.12);offset('UpperArm.R',z,.12);}
-  if(!reduced && presentationState==='GREETING')offset('Head',x,.035);
-  const blend=1-Math.exp(-Math.max(0,dt)*10);
-  for(const [name,{bone}] of rest)bone.quaternion.copy(previous.get(name).slerp(bone.quaternion.clone(),blend));
+ const animation=createLivingAnimation(avatar);
+ return {avatar,height:1.75,animation,update(phase,moving,exercise,reduced,dt=.016,presentationState='IDLE',livingPose=null){
+  const names={march:'march_loop',shoulders:'shoulder_circles_loop',knees:'knee_raise_loop',mobility:'mobility_loop'};
+  const name=livingPose?.animation || (moving&&!reduced?names[exercise]||'idle':presentationState==='CELEBRATING'?'celebrate':presentationState==='GREETING'?'welcome':'rest');
+  animation.update(name,livingPose?.seconds??phase/Math.PI,dt,!!livingPose?.freeze);
  }};
 }
 

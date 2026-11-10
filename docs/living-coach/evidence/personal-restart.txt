@@ -1,0 +1,6 @@
+ISOLATED FIXTURE ONLY: synthetic clock advancement and explicit test feedback; not a human workout.
+PASS: profile + first feedback-complete session recognized after real host restart.
+PASS: three persisted easy sessions change the next march from 20 to 25 seconds, with three exact source session IDs and a persisted explanation. Repetitions remain null.
+PASS: same athlete/plan/history in Forest; fourth session and two dated measurements survive restart; daily/weekly/monthly dashboard reconstructs four completions and their feedback.
+PASS: normal mode excludes marked test sessions/measurements from coach memory and progress without deleting exported records.
+PASS: confirmed deletion removes athlete, session/feedback history, recommendations and body measurements across restart.

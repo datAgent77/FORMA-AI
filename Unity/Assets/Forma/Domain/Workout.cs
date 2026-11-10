@@ -62,13 +62,14 @@ namespace Forma.Domain
         public int CompletedSets { get; private set; }
         public Exercise Current => Plan.Exercises[ExerciseIndex];
         public double CurrentIntervalSeconds => (State==WorkoutState.Paused?SuspendedState:State) switch
-        { WorkoutState.Introduction=>IntroductionSeconds, WorkoutState.Work=>Current.WorkSeconds, WorkoutState.Rest=>Current.RestSeconds, _=>0 };
+        { WorkoutState.Introduction=>IntroDuration, WorkoutState.Work=>Current.WorkSeconds, WorkoutState.Rest=>Current.RestSeconds, _=>0 };
         public bool IsRunning => State==WorkoutState.Introduction || State==WorkoutState.Work || State==WorkoutState.Rest;
-        public WorkoutMachine(WorkoutPlan plan) { Plan=plan ?? throw new ArgumentNullException(nameof(plan)); }
+        public double IntroDuration { get; }
+        public WorkoutMachine(WorkoutPlan plan,double introductionSeconds=IntroductionSeconds) { Plan=plan ?? throw new ArgumentNullException(nameof(plan)); if(!Exercise.Finite(introductionSeconds)||introductionSeconds<=0||introductionSeconds>120)throw new ArgumentOutOfRangeException(nameof(introductionSeconds));IntroDuration=introductionSeconds; }
         public bool Start(bool safetyReady)
         {
             if (State != WorkoutState.Ready || !safetyReady) return false;
-            State=WorkoutState.Introduction; Remaining=IntroductionSeconds; return true;
+            State=WorkoutState.Introduction; Remaining=IntroDuration; return true;
         }
         public void Tick(double seconds)
         {

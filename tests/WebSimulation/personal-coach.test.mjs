@@ -22,7 +22,7 @@ async function finish(c,rating=2){
  throw new Error('Session failed to reach completion');
 }
 test('personal session has warm-up/core/cooldown, exact pause, mandatory feedback and durable completion without fabricated repetitions',async()=>{
- const c=await athlete();let state=await begin(c);const blocks=state.personal.recommendation.blocks;assert.equal(blocks[0].stage,'WarmUp');assert.equal(blocks.at(-1).stage,'Cooldown');assert.equal(state.personal.catalog.length,6);assert.equal(state.personal.recommendation.durationSeconds,300);
+ const c=await athlete();let state=await begin(c);const blocks=state.personal.recommendation.blocks;assert.equal(blocks[0].stage,'WarmUp');assert.equal(blocks.at(-1).stage,'Cooldown');assert.equal(state.personal.catalog.length,7);assert.equal(state.personal.recommendation.durationSeconds,300);
  state=(await c.act('advance',{seconds:12})).state;assert.equal(state.workout.remaining,33);await c.act('pause');await c.act('advance',{seconds:100});state=(await c.request('/api/state')).personal;assert.equal(state.session.state,'PAUSED');assert.equal((await c.act('resume')).accepted,false);await c.act('confirmSpace',{enabled:true});assert.equal((await c.act('resume')).accepted,true);
  state=(await c.act('advance',{seconds:600})).state;assert.equal(state.personal.session.state,'AWAITING_FEEDBACK');assert.equal(state.personal.session.record.elapsedSeconds,45);assert.equal((await c.act('advance',{seconds:600})).accepted,false);
  const s=state.personal.session;assert.equal((await c.request('/api/action',{action:'coachFeedback',value:{blockIndex:s.index,exerciseId:s.record.blocks[s.index].exerciseId,outcome:'Completed'}})).status,400);
