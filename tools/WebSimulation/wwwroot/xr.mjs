@@ -2,6 +2,7 @@ import * as THREE from './vendor/three/three.module.js';
 import {createHumanCoach} from './studio-scene.mjs';
 import {createHolographicEnvironment,createHolographicStage,applyHologram} from './holographic-studio.mjs';
 import {createStudioComposer} from './studio-composer.mjs';
+import {createPersonalCoachUI} from './personal-coach-ui.mjs';
 import {coachPose} from './coach-motion.mjs';
 import {studioView,sessionSummary,canConfirmSpace,workoutLabel} from './studio-flow.mjs';
 import {inspectAR,requestMR,isTransparentSession} from './xr-session.mjs';
@@ -26,12 +27,15 @@ const timeline=surface(2.6,.23,1536,200);timeline.mesh.position.set(.06,.14,1.15
 const buttons=[],rays=[],controllers=[],raycaster=new THREE.Raycaster(),rotation=new THREE.Matrix4();
 const pauseButtons=new WeakMap();
 let model=null,session=null,queue=Promise.resolve(),offline=false,localPaused=true,lastClock=performance.now(),lastFrame=performance.now(),phase=0,placed=false,lastPanel='',poseTracked=false,capability,lastTerminal=null;
+const personalUI=createPersonalCoachUI({send,confirmSpace,getModel:()=>model});
+document.addEventListener('forma-athlete-updated',()=>readState());
 function wrap(ctx,text,x,y,maxWidth,lineHeight){let cursor=y;for(const paragraph of String(text).split('\n')){let line='';for(const word of paragraph.split(' ')){const test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,cursor);cursor+=lineHeight;line=word;}else line=test;}ctx.fillText(line,x,cursor);cursor+=lineHeight;}return cursor;}
 function paintPanel(){
  const state=model?.workout;
  el('session-state').textContent=`${workoutLabel(state?.state)} · ${Math.ceil(state?.remaining||0)} sn · ${state?.completedSets||0} set`;
- const text=offline?'Bağlantı kesildi. Hareketi durdur.':!model?'Koçuna bağlanılıyor…':model.setup.step!=='Complete'?'Başlamadan önce kısa kurulumu tamamla.':state?.state==='Ready'?'Alanını kontrol et. Birlikte başlayalım.':model.coach?.text||'';
- const signature=JSON.stringify({text,state,setup:model?.setup?.step,language:model?.setup?.profile?.language,session:!!session,offline,space:model?.gate?.space});if(signature===lastPanel)return;lastPanel=signature;
+ let text=offline?'Bağlantı kesildi. Hareketi durdur.':!model?'Koçuna bağlanılıyor…':model.setup.step!=='Complete'?'Başlamadan önce kısa kurulumu tamamla.':state?.state==='Ready'?'Alanını kontrol et. Birlikte başlayalım.':model.coach?.text||'';
+ if(model?.personal?.enabled && state?.state==='Work' && !model.personal.catalog?.find(e=>e.id===state.exerciseId)?.animation)text=personalUI.copy().fallback+' '+text;
+ const signature=JSON.stringify({text,state,setup:model?.setup?.step,language:model?.setup?.profile?.language,session:!!session,offline,space:model?.gate?.space,athlete:model?.athlete?.revision,personal:model?.personal?{id:model.personal.recommendation?.id,state:model.personal.session?.state,feedback:model.personal.session?.record?.feedback?.length,save:model.personal.savePending}:null});if(signature===lastPanel)return;lastPanel=signature;
  const c=panel.ctx;c.clearRect(0,0,640,1024);
  c.fillStyle='rgba(7,22,46,.46)';c.beginPath();c.roundRect(4,4,632,1016,24);c.fill();
  c.strokeStyle='rgba(126,226,255,.45)';c.lineWidth=2;c.stroke();
@@ -58,31 +62,35 @@ function paintPanel(){
  }
  // The silhouette is the same recorded video rendered as a diagram, never body tracking.
  c.textAlign='center';c.fillStyle='#c4f7ff';c.font='32px sans-serif';c.fillText(`Set ${state?.set||1} / ${state?.totalSets||3}`,320,900);c.fillStyle='#bfc2b8';c.font='23px sans-serif';c.fillText('3B rehber · Ölçüm değil',320,940);panel.texture.needsUpdate=true;
- const q=cue.ctx;q.clearRect(0,0,1536,230);q.fillStyle='rgba(28,32,31,.85)';q.beginPath();q.roundRect(0,0,1536,230,26);q.fill();q.textAlign='center';q.fillStyle='#79f4ff';q.font='30px sans-serif';q.fillText(state?.exerciseId==='march'?'Hafif yerinde yürüyüş':'Rahat omuz çevirme',768,54);q.fillStyle='#fff';q.font='35px sans-serif';wrap(q,text,768,112,1400,44);cue.texture.needsUpdate=true;
+ const q=cue.ctx;q.clearRect(0,0,1536,230);q.fillStyle='rgba(28,32,31,.85)';q.beginPath();q.roundRect(0,0,1536,230,26);q.fill();q.textAlign='center';q.fillStyle='#79f4ff';q.font='30px sans-serif';q.fillText(model?.personal?.enabled?state?.exerciseName||'Planın hazır':state?.exerciseId==='march'?'Hafif yerinde yürüyüş':'Rahat omuz çevirme',768,54);q.fillStyle='#fff';q.font='35px sans-serif';wrap(q,text,768,112,1400,44);cue.texture.needsUpdate=true;
  const t=timeline.ctx;t.clearRect(0,0,1536,200);t.fillStyle='rgba(6,20,43,.70)';t.beginPath();t.roundRect(0,0,1536,200,24);t.fill();t.textAlign='center';
- const entries=[...(model?.plan?.length?model.plan:model?.exercises||[]).map(e=>[e.id,e.id==='march'?'Yerinde yürüyüş':e.id==='shoulders'?'Omuz çevirme':e.name,e.sets?`${e.sets} × ${e.workSeconds} saniye`:"Seans seç"]),['summary','Seans özeti','Yerel geçmiş']];const tileWidth=1536/entries.length;
+ const timelinePlan=model?.personal?.enabled?(model.plan||[]).slice(model.personal.session?.index||0,(model.personal.session?.index||0)+2):(model?.plan?.length?model.plan:model?.exercises||[]);
+ const entries=[...timelinePlan.map(e=>[e.id,e.id==='march'?'Yerinde yürüyüş':e.id==='shoulders'?'Omuz çevirme':e.name,e.sets?`${e.sets} × ${e.workSeconds} saniye`:"Seans seç"]),['summary','Seans özeti','Yerel geçmiş']];const tileWidth=1536/entries.length;
  entries.forEach(([id,name,dose],i)=>{const active=id===state?.exerciseId||(id==='summary'&&state?.state==='Completed');t.fillStyle=active?'#79f4ff':'#b8d4ed';t.font='34px sans-serif';t.fillText(name,tileWidth*(i+.5),91);t.fillStyle='#afb4aa';t.font='25px sans-serif';t.fillText(dose,tileWidth*(i+.5),139);if(active){t.fillStyle='#79f4ff';t.fillRect(i*tileWidth+30,176,tileWidth-60,5);}});timeline.texture.needsUpdate=true;
  el('coach-cue').textContent=!state||state.state==='Ready'?'5 dakika · 3B stüdyo · Ekipmansız':text;
 
- el('workout-title').textContent=!state||state.state==='Ready'?'Hareketinle aynı frekansta.':state?.state==='Completed'?'Seans tamamlandı':state?.state==='Aborted'?'Seans sonlandırıldı':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
+ el('workout-title').textContent=!state||state.state==='Ready'?'Hareketinle aynı frekansta.':state?.state==='Completed'?'Seans tamamlandı':state?.state==='Aborted'?'Seans sonlandırıldı':model?.personal?.enabled?state?.exerciseName||'Bugünkü planın':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
  el('space-state').textContent=model?.gate?.space?'Alan onaylı':'Başlamak için alanını onayla';
- updateSetup();updateFlow();
+ updateSetup();updateFlow();personalUI.render(model,!!session);
 }
 async function readState(){try{const r=await fetch('/api/state');if(!r.ok)throw new Error();model=await r.json();offline=false;el('connection-status').textContent='Çevrimdışı koç · Geçmiş bu cihazda';paintPanel();}catch{failure();}}
 function failure(){offline=true;localPaused=true;el('connection-status').textContent='Yerel motor bağlantısı kesildi. Hareketi durdur ve bağlantıyı kontrol et.';paintPanel();}
 function send(action,extra={}){
- const result=queue.then(async()=>{try{const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw new Error();model=data.state;offline=false;if(model.workout?.state==='Paused')localPaused=true;if((action==='resume'||action==='start')&&data.accepted){localPaused=false;lastClock=performance.now();}el('connection-status').textContent=model.notice||'Çevrimdışı koç · Geçmiş bu cihazda';paintPanel();return data.accepted;}catch{failure();return false;}});
+ const result=queue.then(async()=>{try{const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw new Error();model=data.state;offline=false;if(model.workout?.state==='Paused')localPaused=true;if((action==='resume'||action==='start'||action==='coachStart'||action==='coachFeedback')&&data.accepted){localPaused=false;lastClock=performance.now();}el('connection-status').textContent=model.notice||'Çevrimdışı koç · Geçmiş bu cihazda';paintPanel();return data.accepted;}catch{failure();return false;}});
  queue=result.catch(()=>false);return result;
 }
 function pause(){localPaused=true;previewPaused=true;return send('pause');}
-async function start(){if(!human){el('asset-status').textContent='Önce 3B koçun yüklenmesini bekle.';return;}previewPaused=false;if(model?.setup.step!=='Complete'){el('setup-panel').hidden=false;updateSetup();return;}if(model?.workout?.state==='Paused'){await send('resume');return;}if(!await send('dailyFive')){el('asset-status').textContent=model?.notice||'Bu program mevcut tercihlerine uygun değil.';return;}await send('start');}
+async function start(){if(!human){el('asset-status').textContent='Önce 3B koçun yüklenmesini bekle.';return;}previewPaused=false;if(model?.setup.step!=='Complete'){el('setup-panel').hidden=false;updateSetup();return;}if(model?.workout?.state==='Paused'){await send('resume');return;}if(model?.athlete?.profile){if(!model.personal?.recommendation)await send('coachRecommend');if(session){await send('coachStart');return;}personalUI.openPlan();return;}if(!await send('dailyFive')){el('asset-status').textContent=model?.notice||'Bu program mevcut tercihlerine uygun değil.';return;}await send('start');}
 function button(label,x,y,action,color='#313b3a'){
  const b=surface(.56,.115,768,160);b.mesh.position.set(x,y,.012);const c=b.ctx;c.fillStyle=color;c.fillRect(0,0,768,160);c.fillStyle='#fff';c.font='500 40px sans-serif';c.textAlign='center';c.fillText(label,384,96);b.texture.needsUpdate=true;b.mesh.userData.action=action;content.add(b.mesh);buttons.push(b.mesh);b.mesh.visible=false;return b;
 }
-button('Alanı onayla',-1.12,.64,confirmSpace);button('Seans öner',-1.12,.47,()=>send('dailyQuick'));
+button('Alanı onayla',-1.12,.64,confirmSpace);button('Seans öner',-1.12,.47,()=>send(model?.athlete?.profile?'coachRecommend':'dailyQuick'));
 button('Başlat / Devam',-1.12,.30,start,'#71652f');button('Ⅱ  DURAKLAT',1.02,1.94,pause,'#6c3a32');
 button('Seansı bitir',1.02,.47,()=>send('stop'));button('XR çıkış',1.02,.30,async()=>{await pause();if(session)await session.end();});
 button('Koçu yerleştir',-1.12,.13,()=>{place();pause();send('confirmSpace',{enabled:false});});
+function xrFeedback(outcome,difficulty,discomfort=false){const s=model?.personal?.session;if(!s?.awaitingFeedback)return;return send('coachFeedback',{value:{blockIndex:s.index,exerciseId:s.record.blocks[s.index].exerciseId,outcome,difficulty,repetitions:null,discomfort}});}
+for(let i=1;i<=5;i++){const b=button('Tamam · '+i,-1.45,1.8-i*.13,()=>xrFeedback('Completed',i));b.mesh.userData.feedback=true;}
+for(const [label,y,action] of [['Kısmen · 3',.97,()=>xrFeedback('Partial',3)],['Atladım',.84,()=>xrFeedback('Skipped',null)],['Rahatsızlık',.71,()=>xrFeedback('Partial',5,true)]]){const b=button(label,-1.45,y,action);b.mesh.userData.feedback=true;}
 function choose(origin,direction){raycaster.set(origin,direction);const hit=raycaster.intersectObjects(buttons.filter(b=>b.visible),false)[0];if(hit)hit.object.userData.action();}
 for(let i=0;i<2;i++){
  const controller=renderer.xr.getController(i);scene.add(controller);controllers.push(controller);
@@ -101,7 +109,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
 });
 renderer.domElement.addEventListener('pointercancel',()=>{drag=null;});
 renderer.domElement.addEventListener('pointerup',e=>{if(drag&&!drag.moved&&!session){const rect=renderer.domElement.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=raycaster.intersectObjects(buttons.filter(b=>b.visible),false)[0];hit?.object.userData.action();}drag=null;});
-el('confirm-space').onclick=confirmSpace;el('prepare').onclick=()=>send('dailyQuick');el('start').onclick=start;el('pause').onclick=pause;el('stop').onclick=()=>send('stop');el('reposition').onclick=()=>{place();pause();send('confirmSpace',{enabled:false});};
+el('confirm-space').onclick=confirmSpace;el('prepare').onclick=()=>model?.athlete?.profile?el('personal-plan-open').click():send('dailyQuick');el('start').onclick=start;el('pause').onclick=pause;el('stop').onclick=()=>send('stop');el('reposition').onclick=()=>{place();pause();send('confirmSpace',{enabled:false});};
 el('leave-xr').onclick=async()=>{await pause();await session?.end();};
 el('space-confirm').onchange=()=>{el('enter-xr').disabled=!capability?.supported||!el('space-confirm').checked;};
 el('enter-xr').onclick=async()=>{
@@ -120,13 +128,14 @@ async function confirmSpace(){
  if(!canConfirmSpace({immersive:!!session,tracked:poseTracked,visible:session?.visibilityState==='visible'})){el('xr-status').textContent='Takip ve görünürlük hazır değil. Dur ve yeniden kontrol et.';return false;}
  // Desktop observations are explicitly synthetic. A headset's tracking signals come only from XRFrame.
  if(!session){await send('signal',{field:'tracking',enabled:true});await send('signal',{field:'passthrough',enabled:true});await send('signal',{field:'focus',enabled:!document.hidden});}
- await send('confirmSpace',{enabled:true});
+ return await send('confirmSpace',{enabled:true});
 }
 async function newSession(){
  if(await send('dailyBack')){await send('confirmSpace',{enabled:false});el('summary-panel').hidden=true;previewPaused=false;}
 }
 function updateFlow(){
  const view=studioView(model,offline);el('primary-action').textContent=view.label;el('primary-action').disabled=!view.action;
+ if(model?.personal?.savePending)el('primary-action').textContent=personalUI.copy().retry;else if(model?.personal?.session?.awaitingFeedback)el('primary-action').textContent=personalUI.copy().giveFeedback;
  el('pause').disabled=offline;
  el('preview-play').disabled=!!model?.workout?.state&&model.workout.state!=='Ready';
  el('stop').disabled=!model?.workout?.isRunning&&model?.workout?.state!=='Paused';
@@ -138,16 +147,17 @@ function updateFlow(){
   if(lastTerminal!==model.workout.state){el('summary-panel').hidden=!!session;lastTerminal=model.workout.state;}
  }else{lastTerminal=null;el('summary-panel').hidden=true;}
  const list=el('history-list');list.replaceChildren();
- const rows=model?.history||[];
+ const rows=[...(model?.personal?.history||[]).map(r=>({...r,outcome:r.outcome==='Cancelled'?'Aborted':r.outcome,activeSeconds:r.timedActiveSeconds,completedSets:r.feedback.filter(f=>f.outcome==='Completed').length})),...(model?.history||[])].sort((a,b)=>new Date(b.startedUtc)-new Date(a.startedUtc));
  if(!rows.length){const p=document.createElement('p');p.textContent='Henüz seans yok. Tamamlanan ve yarıda bitirilen seansların burada görünür.';list.append(p);}
  for(const row of rows.slice(0,8)){
   const item=document.createElement('article'),title=document.createElement('strong'),detail=document.createElement('p');
-  title.textContent=row.outcome==='Completed'?'Tamamlandı':row.outcome==='Aborted'?'Sonlandırıldı':'Yarıda kaldı';
+  title.textContent=row.outcome==='Completed'?'Tamamlandı':row.outcome==='Aborted'?'Sonlandırıldı':row.outcome==='Skipped'?'Atlandı':'Yarıda kaldı';
   const date=new Date(row.startedUtc);detail.textContent=`${Number.isNaN(date.getTime())?'Tarih yok':date.toLocaleDateString('tr-TR')} · ${Math.floor(row.activeSeconds||0)} sn çalışma · ${row.completedSets||0} set`;
   item.append(title,detail);list.append(item);
  }
 }
 el('primary-action').onclick=async()=>{
+ if(model?.personal?.savePending){await send('coachRetrySave');return;}if(model?.personal?.session?.awaitingFeedback){personalUI.openFeedback();return;}
  const action=studioView(model,offline).action;
  if(action==='connect'){await readState();if(!offline)await pause();}
  else if(action==='setup'){el('setup-panel').hidden=false;updateSetup();}
@@ -185,6 +195,7 @@ scene.background=new THREE.Color(0x080f21);
 renderer.setAnimationLoop((now,frame)=>{
  const dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
  if(session&&frame){const reference=renderer.xr.getReferenceSpace();const tracked=!!reference&&!!frame.getViewerPose(reference);if(tracked!==poseTracked){poseTracked=tracked;if(!tracked)pause();send('signal',{field:'tracking',enabled:tracked});}if(tracked&&!placed)place();for(const source of session.inputSources){const pressed=!!source.gamepad?.buttons[5]?.pressed;if(pressed&&!pauseButtons.get(source))pause();pauseButtons.set(source,pressed);}}
+ const awaiting=!!model?.personal?.session?.awaitingFeedback;for(const b of buttons)b.visible=!!session && (b.userData.feedback?awaiting:!awaiting||b.position.x>=0);
  const pose=coachPose(model?.workout,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden,reduced:!!model?.setup?.profile?.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches});
  human?.update(pose.phase,pose.moving,pose.exercise,pose.reduced,dt);
 

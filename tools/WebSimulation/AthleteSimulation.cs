@@ -12,7 +12,7 @@ public sealed partial class Simulation
         {
             var document=AthleteStore.Load();
             return new{status="Ready",schemaVersion=document.schemaVersion,revision=document.revision,profile=document.profile,error=(string)null,
-                legacySessionCount=history.Count,completedSessionCount=history.Count(x=>x.outcome=="Completed"),
+                legacySessionCount=history.Count,completedSessionCount=PersonalCompletionCount(),
                 defaults=new{language=flow.Draft.language,preferredMinutes=flow.Draft.preferredMinutes==0?5:flow.Draft.preferredMinutes,
                     experience=flow.Draft.experience==ExperienceLevel.Skip?ExperienceLevel.New:flow.Draft.experience,movementLimits=flow.Draft.movementLimits,
                     primaryGoal=flow.Draft.goal==FitnessGoal.BuildRoutine?AthleteGoal.Consistency:flow.Draft.goal==FitnessGoal.GentleMovement?AthleteGoal.Mobility:AthleteGoal.GeneralFitness}};
@@ -42,19 +42,22 @@ public sealed partial class Simulation
     {
         if(legacyRoot==null)return;
         string old=Path.Combine(legacyRoot,Path.GetFileName(root));
-        foreach(var name in new[]{"product-profile.json","simulation-history.json","athlete-profile.json"})
+        foreach(var name in new[]{"product-profile.json","simulation-history.json","athlete-profile.json","personal-training.json"})
             foreach(var suffix in new[]{"",".tmp"}){string path=Path.Combine(old,name+suffix);if(File.Exists(path))File.Delete(path);}
     }
     bool AthleteAllows(Forma.Domain.WorkoutPlan plan)
     {
         try
         {
-            var p=AthleteStore.Load().profile?.preferences;if(p==null)return true;
+            var document=AthleteStore.Load();var p=document.profile?.preferences;if(p==null)return true;
+            if(new AdaptiveTrainingEngine().Recommend(document.profile,document.revision,Memory(TrainingStore.Load()),DateTimeOffset.UtcNow).status!="Ready")return false;
             return !plan.Exercises.Any(e=>(e.Id=="march" && (p.movementLimits & MovementLimits.AvoidLowerBody)!=0) ||
                 (e.Id=="shoulders" && (p.movementLimits & MovementLimits.AvoidShoulders)!=0));
         }
         catch(Exception e) when(e is IOException || e is UnauthorizedAccessException){return false;}
     }
+    int? PersonalCompletionCount()
+    {try{return history.Count(x=>x.outcome=="Completed")+TrainingStore.Load().sessions.Count(x=>x.outcome=="Completed");}catch(IOException){return null;}}
     object AthleteExport()=>new{schemaVersion=2,data=AthleteStore.Raw(),source="local-manual-profile",legacySetup=File.Exists(Path.Combine(root,"product-profile.json"))?File.ReadAllText(Path.Combine(root,"product-profile.json")):null,
         legacyHistory=File.Exists(HistoryPath)?File.ReadAllText(HistoryPath):null};
 }

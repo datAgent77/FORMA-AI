@@ -14,7 +14,7 @@ public static class LocalDataLocation
             {
                 string id=Path.GetFileName(directory);if(!Guid.TryParseExact(id,"N",out _))continue;
                 string destination=Path.Combine(root,id);Directory.CreateDirectory(destination);
-                foreach(string name in new[]{"product-profile.json","simulation-history.json","athlete-profile.json"})
+                foreach(string name in new[]{"product-profile.json","simulation-history.json","athlete-profile.json","personal-training.json"})
                 {
                     string source=Path.Combine(directory,name),target=Path.Combine(destination,name);
                     if(File.Exists(source) && !File.Exists(target))File.Copy(source,target,false);

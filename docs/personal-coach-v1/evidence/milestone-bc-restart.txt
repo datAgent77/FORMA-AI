@@ -1,0 +1,3 @@
+ISOLATED FIXTURE ONLY: synthetic clock advancement and explicit test feedback; not a human workout.
+PASS: profile + first feedback-complete session recognized after real host restart.
+PASS: three persisted easy sessions change the next march from 20 to 25 seconds, with three exact source session IDs and a persisted explanation. Repetitions remain null.

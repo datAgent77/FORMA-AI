@@ -100,6 +100,15 @@ namespace Forma.Domain
                 State=WorkoutState.Work; Remaining=Current.WorkSeconds;
             }
         }
+        // Explicit manual skip; advancing does not invent a completed set or elapsed work.
+        public bool SkipCurrentWork()
+        {
+            bool paused=State==WorkoutState.Paused;
+            if(paused && SuspendedState!=WorkoutState.Work || !paused && State!=WorkoutState.Work)return false;
+            if(paused)State=SuspendedState;
+            int completed=CompletedSets;Advance();CompletedSets=completed;
+            if(paused)Pause();return true;
+        }
         public void Pause() { if (IsRunning) { SuspendedState=State; State=WorkoutState.Paused; } }
         public bool Resume(bool safetyReady)
         { if (State!=WorkoutState.Paused || !safetyReady) return false; State=SuspendedState; return true; }
