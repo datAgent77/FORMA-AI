@@ -22,3 +22,6 @@ unity-create.log
 # Python tooling caches
 __pycache__/
 *.py[cod]
+
+# Private local athlete/profile/session data, never served or committed
+tools/WebSimulation/.local-data/

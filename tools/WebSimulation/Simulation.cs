@@ -27,9 +27,9 @@ public sealed partial class Simulation
     string notice="";
     bool closed;
     bool selectMarch=true,selectShoulders=true;
-    public Simulation(string root,CoachCatalog catalog)
+    public Simulation(string root,CoachCatalog catalog,string legacyRoot=null)
     {
-        this.root=root;this.catalog=catalog;
+        this.root=root;this.catalog=catalog;this.legacyRoot=legacyRoot;
         profiles=new FaultableProfiles(new ProductProfileRepository(root,new WebProfileCodec()));
         history=LoadHistory();LoadProfile();
         Log("Local simulation opened. No camera, headset or microphone is connected.");
@@ -100,6 +100,7 @@ public sealed partial class Simulation
                 Persist();
                 if(dailyEnabled){workout=new WorkoutMachine(approved);record=null;}else PrepareWorkout();
                 if(workout==null)return Reject("No compatible starter movement. Edit your setup preferences.");
+                if(!AthleteAllows(workout.Plan))return Reject("The athlete profile excludes this workout, or athlete storage is unreadable. Update the selection before starting.");
                 accepted=workout.Start(gate.CanExercise);
                 if(accepted)
                 {
@@ -132,13 +133,13 @@ public sealed partial class Simulation
                     default:throw new ArgumentException("Unknown simulated signal.");
                 }
                 if(!a.Enabled)Interrupt();accepted=true;Log("Simulated "+a.Field+" "+(a.Enabled?"restored":"lost")+"; never auto-resumed.");break;
-            case "writeFault":profiles.FailWrites=a.Enabled;accepted=true;Log("Profile write fault "+(a.Enabled?"enabled":"disabled")+".");break;
+            case "writeFault":AthleteStore.FailWrites=a.Enabled;profiles.FailWrites=a.Enabled;accepted=true;Log("Profile write fault "+(a.Enabled?"enabled":"disabled")+".");break;
             case "reload":
                 if(SessionActive)Interrupt();Persist();LoadProfile();accepted=true;Log("Reloaded stored profile. Active workout recovery is not implemented.");break;
             case "reset":
                 if(!a.Enabled)return Reject("Explicit reset confirmation required.");
                 if(SessionActive)return Reject("End the workout before deleting simulation data.");
-                profiles.Delete();history.Clear();if(File.Exists(HistoryPath))File.Delete(HistoryPath);
+                AthleteStore.Delete();DeleteLegacyCopies();profiles.Delete();history.Clear();if(File.Exists(HistoryPath))File.Delete(HistoryPath);
                 profiles.FailWrites=false;selectMarch=true;selectShoulders=true;LoadProfile();events.Clear();accepted=true;Log("This browser's simulation data reset. Quest data is untouched.");break;
             default:throw new ArgumentException("Unknown simulation action.");
         }
@@ -189,7 +190,7 @@ public sealed partial class Simulation
         File.Move(temporary,HistoryPath,true);
     }
     void Log(string text){events.Insert(0,text);if(events.Count>12)events.RemoveAt(12);}
-    public byte[] Export()=>Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{simulationOnly=true,profile=flow.Draft,sessions=history},SimulationJson.Options));
+    public byte[] Export()=>Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{simulationOnly=true,profile=flow.Draft,sessions=history,athlete=AthleteExport()},SimulationJson.Options));
     public object Snapshot()
     {
         var p=flow.Draft;

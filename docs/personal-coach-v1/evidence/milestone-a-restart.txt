@@ -1,0 +1,1 @@
+PASS: profile + completed history survive two real host restarts; goal edit persists; default-store legacy migration preserves identity/history; deletion removes legacy copies and does not resurrect after restart. All fixture data isolated.

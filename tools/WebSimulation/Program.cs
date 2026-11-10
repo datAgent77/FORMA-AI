@@ -15,7 +15,7 @@ builder.Services.ConfigureHttpJsonOptions(o=>SimulationJson.Configure(o.Serializ
 var app=builder.Build();
 Console.WriteLine("FORMA simulation: services ready");
 var sessions=new ConcurrentDictionary<string,Simulation>();
-string dataRoot=Environment.GetEnvironmentVariable("FORMA_SIM_DATA") ?? Path.Combine(Path.GetTempPath(),"forma-web-simulation");
+string dataRoot=LocalDataLocation.Resolve(app.Environment.ContentRootPath,out string legacyRoot);
 var catalog=Simulation.LoadCatalog(Path.Combine(AppContext.BaseDirectory,"Coaches.json"));
 app.Use(async(context,next)=>
 {
@@ -43,10 +43,10 @@ Simulation GetSession(HttpContext context)
     if(!Guid.TryParseExact(id,"N",out _))
     {
         id=Guid.NewGuid().ToString("N");
-        context.Response.Cookies.Append("forma-sim",id,new CookieOptions{HttpOnly=true,SameSite=SameSiteMode.Strict,IsEssential=true,MaxAge=TimeSpan.FromDays(7)});
     }
+    context.Response.Cookies.Append("forma-sim",id,new CookieOptions{HttpOnly=true,Secure=context.Request.IsHttps,SameSite=SameSiteMode.Strict,IsEssential=true,MaxAge=TimeSpan.FromDays(365)});
     if(sessions.Count>=128 && !sessions.ContainsKey(id))throw new InvalidOperationException("Restart the local test host to clear unused sessions.");
-    return sessions.GetOrAdd(id,key=>new Simulation(Path.Combine(dataRoot,key),catalog));
+    return sessions.GetOrAdd(id,key=>new Simulation(Path.Combine(dataRoot,key),catalog,legacyRoot));
 }
 app.MapGet("/api/state",(HttpContext context)=>
 {
@@ -66,6 +66,26 @@ app.MapGet("/api/export",(HttpContext context)=>
 {
     var simulation=GetSession(context);lock(simulation)
         return Results.File(simulation.Export(),"application/json","forma-simulation-export.json");
+});
+app.MapGet("/api/athlete",(HttpContext context)=>
+{
+    var simulation=GetSession(context);lock(simulation)return Results.Json(simulation.AthleteSnapshot());
+});
+app.MapPost("/api/athlete",(HttpContext context,AthleteRequest request)=>
+{
+    var simulation=GetSession(context);lock(simulation)
+    {
+        try
+        {
+            if(request.Action=="delete"){simulation.DeleteAthlete(request);return Results.Json(new{accepted=true,state=simulation.AthleteSnapshot()});}
+            return Results.Json(new{accepted=true,state=simulation.SaveAthlete(request)});
+        }
+        catch(AthleteConflictException){return Results.Json(new{code="conflict",error="Profil başka bir sekmede değişti. Yeniden yükleyip tekrar dene."},statusCode:409);}
+        catch(Exception e) when(e is ArgumentException || e is InvalidOperationException)
+        {return Results.Json(new{code="invalid",error="Profil kaydedilemedi. Alanları kontrol et; açık seans varsa önce bitir."},statusCode:400);}
+        catch(Exception e) when(e is IOException || e is UnauthorizedAccessException || e is JsonException)
+        {return Results.Json(new{code="storage",error="Yerel veriye yazılamadı. İşlem tamamlanmadı; girişlerini koruyup yeniden dene."},statusCode:503);}
+    }
 });
 app.MapGet("/health",()=>Results.Json(new{status="ok",engine="shared-csharp",hardwareValidated=false}));
 Console.WriteLine("FORMA simulation: starting loopback listener");
