@@ -70,6 +70,8 @@ namespace Forma.Product
     [Serializable] public sealed class PersonalWorkoutRecord
     {
         public string sessionId,athleteId,recommendationId,startedUtc,endedUtc;
+        public string environment="HolographicStudio";
+        public bool isTestData;
         public string outcome="Interrupted";
         public string language="tr";
         public AthleteGoal goal;
@@ -93,7 +95,7 @@ namespace Forma.Product
         public PersonalSessionEngine(string athleteId,string recommendationId,IEnumerable<PersonalBlock> blocks,AthleteProfileInput profile,DateTimeOffset now)
         {
             PersonalWorkoutCatalog.ValidatePlan(blocks,profile);
-            Record=new PersonalWorkoutRecord{sessionId=Guid.NewGuid().ToString("N"),athleteId=athleteId,recommendationId=recommendationId,startedUtc=now.ToString("O"),language=profile.language,goal=profile.primaryGoal,
+            Record=new PersonalWorkoutRecord{sessionId=Guid.NewGuid().ToString("N"),athleteId=athleteId,recommendationId=recommendationId,startedUtc=now.ToString("O"),language=profile.language,goal=profile.primaryGoal,environment=profile.preferredEnvironment==TrainingEnvironment.Forest?"Forest":"HolographicStudio",
                 blocks=blocks.Select(b=>new PersonalBlock{exerciseId=b.exerciseId,stage=b.stage,workSeconds=b.workSeconds,restSeconds=b.restSeconds}).ToList()};
             Clock=new WorkoutMachine(new WorkoutPlan("personal-v1",Record.blocks.Select(b=>{var e=PersonalWorkoutCatalog.Find(b.exerciseId);return new Exercise(e.Id,e.Name(profile.language),e.Guidance(profile.language)+" "+e.Safety(profile.language),b.workSeconds,b.restSeconds,1);})));
         }

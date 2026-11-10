@@ -1,0 +1,53 @@
+PASS unobserved XR is unavailable
+PASS floor cannot be confirmed without readiness
+PASS space cannot be confirmed without readiness
+PASS unavailable scene cannot resume
+PASS valid signals do not invent a confirmed floor
+PASS space confirmation requires floor review
+PASS floor review leads to separate space confirmation
+PASS explicit floor and space confirmations reach Ready
+PASS pause invalidates space
+PASS resume without renewed space is blocked
+PASS space review alone never auto-resumes
+PASS explicit resume restores readiness
+PASS resume is not an implicit start command
+PASS lost signal 0 makes foundation unavailable
+PASS lost signal 0 invalidates space
+PASS lost signal 0 blocks confirmation
+PASS lost signal 0 blocks resume
+PASS signal recovery 0 never auto-resumes
+PASS only tracking loss invalidates floor calibration 0
+PASS recovered space remains paused 0
+PASS recovered scene resumes only explicitly 0
+PASS lost signal 1 makes foundation unavailable
+PASS lost signal 1 invalidates space
+PASS lost signal 1 blocks confirmation
+PASS lost signal 1 blocks resume
+PASS signal recovery 1 never auto-resumes
+PASS only tracking loss invalidates floor calibration 1
+PASS tracking recovery requires renewed floor confirmation
+PASS recovered space remains paused 1
+PASS recovered scene resumes only explicitly 1
+PASS lost signal 2 makes foundation unavailable
+PASS lost signal 2 invalidates space
+PASS lost signal 2 blocks confirmation
+PASS lost signal 2 blocks resume
+PASS signal recovery 2 never auto-resumes
+PASS only tracking loss invalidates floor calibration 2
+PASS recovered space remains paused 2
+PASS recovered scene resumes only explicitly 2
+PASS lost signal 3 makes foundation unavailable
+PASS lost signal 3 invalidates space
+PASS lost signal 3 blocks confirmation
+PASS lost signal 3 blocks resume
+PASS signal recovery 3 never auto-resumes
+PASS only tracking loss invalidates floor calibration 3
+PASS recovered space remains paused 3
+PASS recovered scene resumes only explicitly 3
+PASS reposition invalidates floor and space
+PASS reposition requires floor review
+PASS reposition cannot resume with stale confirmations
+PASS reposition floor review does not resume
+PASS reposition requires floor, space and explicit resume
+PASS changing floor review clears prior space consent
+52 foundation safety assertions passed (.NET only; no Unity/XR/device verification).

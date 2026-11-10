@@ -6,8 +6,9 @@ namespace Forma.Product
 {
     [Serializable] public sealed class PersonalRecommendation
     {
-        public string recommendationId,athleteId,createdUtc;
+        public string recommendationId,athleteId,createdUtc,profileTrainingKey,afterSessionId;
         public int profileRevision;
+        public bool isTestData;
         public string rule="Beginner";
         public int rulesVersion=1;
         public string status="Ready";
@@ -20,8 +21,9 @@ namespace Forma.Product
     {
         public IReadOnlyList<PersonalWorkoutRecord> Sessions { get; }
         public IReadOnlyList<SessionRecord> LegacySessions { get; }
-        public CoachMemoryService(IEnumerable<PersonalWorkoutRecord> sessions,IEnumerable<SessionRecord> legacy)
-        {Sessions=(sessions??Array.Empty<PersonalWorkoutRecord>()).OrderByDescending(x=>Date(x.startedUtc)).ToList();LegacySessions=(legacy??Array.Empty<SessionRecord>()).ToList();}
+        public IReadOnlyList<BodyMeasurement> Measurements { get; }
+        public CoachMemoryService(IEnumerable<PersonalWorkoutRecord> sessions,IEnumerable<SessionRecord> legacy,IEnumerable<BodyMeasurement> measurements=null)
+        {Sessions=(sessions??Array.Empty<PersonalWorkoutRecord>()).OrderByDescending(x=>Date(x.startedUtc)).ToList();LegacySessions=(legacy??Array.Empty<SessionRecord>()).ToList();Measurements=(measurements??Array.Empty<BodyMeasurement>()).ToList();}
         public static DateTimeOffset Date(string value)=>DateTimeOffset.TryParse(value,out var result)?result:DateTimeOffset.MinValue;
         public int CompletedCount=>Sessions.Count(x=>x.outcome=="Completed")+LegacySessions.Count(x=>x.outcome=="Completed");
         public int CompletedThisWeek(DateTimeOffset now)
@@ -31,11 +33,12 @@ namespace Forma.Product
     }
     public sealed class AdaptiveTrainingEngine
     {
+        public static string TrainingKey(AthleteProfileInput p)=>$"{p.primaryGoal}/{p.experience}/{p.preferredMinutes}/{(int)p.movementLimits}/{p.language}";
         public PersonalRecommendation Recommend(AthleteProfile athlete,int revision,CoachMemoryService memory,DateTimeOffset now)
         {
             if(!AthleteProfile.Valid(athlete))throw new ArgumentException("Valid athlete required.");
             var p=athlete.preferences;string T(string tr,string en)=>p.language=="tr"?tr:en;
-            var r=new PersonalRecommendation{recommendationId=Guid.NewGuid().ToString("N"),athleteId=athlete.athleteId,createdUtc=now.ToString("O"),profileRevision=revision};var reasons=new List<string>();
+            var r=new PersonalRecommendation{recommendationId=Guid.NewGuid().ToString("N"),athleteId=athlete.athleteId,createdUtc=now.ToString("O"),profileRevision=revision,profileTrainingKey=TrainingKey(p)};var reasons=new List<string>();
             var known=memory.Sessions.Where(x=>x.athleteId==athlete.athleteId && CoachMemoryService.Date(x.startedUtc)<=now).ToList();
             var recent=known.Where(x=>x.outcome=="Completed").Take(3).ToList();
             // Unresolved discomfort in the latest recorded session stops a new recommendation; no diagnosis.
@@ -53,7 +56,7 @@ namespace Forma.Product
             bool returning=allCompletionTimes.Count>0 && now-allCompletionTimes.Max()>=TimeSpan.FromDays(14);
 
             bool difficult=known.Count>=2 && known.Take(2).All(x=>x.feedback.Any(f=>f.difficulty>=4));
-            bool easy=recent.Count==3 && recent.All(x=>x.feedback.Count==x.blocks.Count && x.feedback.All(f=>f.outcome==ExerciseReport.Completed && f.difficulty.HasValue && f.difficulty<=2 && !f.discomfort)) && recent.All(x=>now-CoachMemoryService.Date(x.endedUtc)<TimeSpan.FromDays(14));
+            bool easy=recent.Count==3 && known.Take(3).All(x=>x.outcome=="Completed") && recent.All(x=>x.feedback.Count==x.blocks.Count && x.feedback.All(f=>f.outcome==ExerciseReport.Completed && f.difficulty.HasValue && f.difficulty<=2 && !f.discomfort)) && recent.All(x=>now-CoachMemoryService.Date(x.endedUtc)<TimeSpan.FromDays(14));
             if(missed)
             {r.rule="Returning";work=15;rest=20;r.evidenceSessionIds=known.Take(3).Select(x=>x.sessionId).ToArray();reasons.Add(T("Son üç girişimin tamamlanmadı. Daha kısa hareket aralıklarıyla küçük bir geri dönüş öneriyorum.","Your last three attempts were not completed. A manageable return uses shorter work intervals."));}
             else if(returning)

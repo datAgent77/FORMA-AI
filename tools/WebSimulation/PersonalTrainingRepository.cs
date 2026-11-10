@@ -2,7 +2,8 @@ using Forma.Product;
 using System.Text.Json;
 public sealed class PersonalTrainingDocument
 {
-    public int schemaVersion=1;
+    public int schemaVersion=2;
+    public List<BodyMeasurement> measurements=new();
     public List<PersonalWorkoutRecord> sessions=new();
     public List<PersonalRecommendation> recommendations=new();
 }
@@ -18,7 +19,7 @@ public sealed class PersonalTrainingRepository
         try
         {
             var d=JsonSerializer.Deserialize<PersonalTrainingDocument>(File.ReadAllText(PathName),SimulationJson.Options);
-            if(d==null || d.schemaVersion!=1 || d.sessions==null || d.recommendations==null || d.sessions.Select(x=>x?.sessionId).Distinct().Count()!=d.sessions.Count)throw new AthleteStorageException("Unsupported training data.");
+            if(d==null || (d.schemaVersion!=1 && d.schemaVersion!=2) || d.measurements==null || d.sessions==null || d.recommendations==null || d.sessions.Select(x=>x?.sessionId).Distinct().Count()!=d.sessions.Count)throw new AthleteStorageException("Unsupported training data.");
             foreach(var s in d.sessions)
             {
                 if(s==null || !Guid.TryParseExact(s.sessionId,"N",out _) || !Guid.TryParseExact(s.athleteId,"N",out _) || !Guid.TryParseExact(s.recommendationId,"N",out _) ||
@@ -34,6 +35,9 @@ public sealed class PersonalTrainingRepository
                 if(r==null || !Guid.TryParseExact(r.recommendationId,"N",out _) || !Guid.TryParseExact(r.athleteId,"N",out _) || r.profileRevision<1 || r.blocks==null || r.blocks.Count>14 || r.reasons==null || r.evidenceSessionIds==null || !DateTimeOffset.TryParse(r.createdUtc,out _) || (r.status!="Ready" && r.status!="SafetyStop" && r.status!="NoCompatibleWorkout"))throw new AthleteStorageException("Invalid recommendation.");
                 foreach(var b in r.blocks)ValidateBlock(b);
             }
+            if(d.measurements.Select(m=>m?.measurementId).Distinct().Count()!=d.measurements.Count)throw new AthleteStorageException("Duplicate measurement IDs.");
+            foreach(var m in d.measurements){if(m==null || !Guid.TryParseExact(m.measurementId,"N",out _) || !Guid.TryParseExact(m.athleteId,"N",out _) || !DateTimeOffset.TryParse(m.recordedUtc,out _))throw new AthleteStorageException("Invalid measurement identity.");BodyMeasurementInput.Validate(m.entry,DateTimeOffset.UtcNow);}
+            if(d.schemaVersion==1){d.schemaVersion=2;Save(d);}
             return d;
         }
         catch(Exception e) when(e is JsonException || e is ArgumentException){throw new AthleteStorageException("Training data is unreadable. Original file preserved.");}

@@ -77,6 +77,7 @@ app.MapPost("/api/athlete",(HttpContext context,AthleteRequest request)=>
     {
         try
         {
+            if(request==null)return Results.Json(new{code="invalid",error="Request required."},statusCode:400);
             if(request.Action=="delete"){simulation.DeleteAthlete(request);return Results.Json(new{accepted=true,state=simulation.AthleteSnapshot()});}
             return Results.Json(new{accepted=true,state=simulation.SaveAthlete(request)});
         }

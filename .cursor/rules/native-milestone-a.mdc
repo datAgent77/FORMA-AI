@@ -1,6 +1,10 @@
 ---
-description: Current FORMA direction is WebXR-first development
+description: FORMA Personal Coach V1 is WebXR-first with persistence and truthful adaptation
 alwaysApply: true
 ---
 
-The user's 2026-11-05 clarification supersedes the native-only milestone instruction: develop the existing WebXR experience first. Unity work is paused, not a prerequisite. Preserve existing native sources and evidence; never call browser tests a native build or physical headset validation. Keep shared workout/business rules in C#, use explicit safety confirmation and pause/resume, and do not invent tracking, repetitions, calories or completed workouts. Work on a feature branch; do not auto-merge.
+The user's 2026-11-10 Personal Coach V1 mission supersedes earlier visual-only milestone limits. Implement A–F in the existing application, with the A–C persistence/adaptation test gate before D–F. Preserve the holographic studio, shared C# domain logic and working sessions. Unity/native work stays paused.
+
+Persist versioned local athlete data without deleting history. Recommendations must use actual stored feedback and retain explanations/evidence IDs. Never infer repetitions, anatomy, calories, body composition or medical accuracy from timers/animations. Keep measurement dates, sources, estimates and unverified external reports explicit. Mark fixture data, keep test roots isolated and do not use test records in ordinary athlete memory.
+
+MR requires transparent composition; VR is a separate explicit equipment-free action, never an MR fallback. Pause on lost tracking/focus; no automatic resume. Preserve a safe exit regardless of storage failures. Desktop and mocked/API checks are not physical Quest verification. Work on a feature branch, push reviewable changes, and do not auto-merge.

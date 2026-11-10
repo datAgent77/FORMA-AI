@@ -35,6 +35,7 @@ namespace Forma.Domain
         public bool PassthroughReady { get; set; }
         public bool TrackingReady { get; set; }
         public bool HasFocus { get; set; }
-        public bool CanExercise => EnvironmentConfirmed && PassthroughReady && TrackingReady && HasFocus;
+        public bool EquipmentFreeVirtualMode { get; set; } // Explicit equipment-free Worlds choice; never inferred passthrough.
+        public bool CanExercise => EnvironmentConfirmed && (PassthroughReady || EquipmentFreeVirtualMode) && TrackingReady && HasFocus;
     }
 }

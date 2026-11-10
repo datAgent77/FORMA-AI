@@ -49,7 +49,7 @@ export async function createHumanCoach(parent,onStatus){
  parent.add(avatar);onStatus('3B koç hazır · Geçici stilize model');
  const offset=(name,axis,angle)=>{const entry=rest.get(name);if(entry)entry.bone.quaternion.copy(entry.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis,angle));};
  const x=new THREE.Vector3(1,0,0),z=new THREE.Vector3(0,0,1);
- return {avatar,height:1.75,update(phase,moving,exercise,reduced,dt=.016){
+ return {avatar,height:1.75,update(phase,moving,exercise,reduced,dt=.016,presentationState='IDLE'){
   const previous=new Map([...rest].map(([name,{bone}])=>[name,bone.quaternion.clone()]));
   for(const {bone,q} of rest.values())bone.quaternion.copy(q);
   if(moving&&!reduced){
@@ -60,6 +60,8 @@ export async function createHumanCoach(parent,onStatus){
    offset('UpperArm.L',x,-swing*.12);offset('UpperArm.R',x,swing*.12);
   }else{offset('Shoulder.L',z,swing*.09);offset('Shoulder.R',z,-swing*.09);offset('UpperArm.L',x,Math.cos(phase)*.07);offset('UpperArm.R',x,Math.cos(phase)*.07);}
  }
+  if(!reduced && presentationState==='CELEBRATING'){offset('UpperArm.L',z,-.12);offset('UpperArm.R',z,.12);}
+  if(!reduced && presentationState==='GREETING')offset('Head',x,.035);
   const blend=1-Math.exp(-Math.max(0,dt)*10);
   for(const [name,{bone}] of rest)bone.quaternion.copy(previous.get(name).slerp(bone.quaternion.clone(),blend));
  }};

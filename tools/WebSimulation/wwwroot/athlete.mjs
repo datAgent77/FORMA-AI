@@ -13,7 +13,7 @@ function labels(){
  for(const option of field('preferredMinutes').options)option.textContent=`${option.value} ${language==='tr'?'dakika':'minutes'}`;
  welcome();
 }
-function welcome(){const p=state?.profile;el('athlete-welcome').textContent=p?copy().welcome(p.preferences.displayName,state.completedSessionCount||0):'';}
+function welcome(){const p=state?.profile;el('athlete-welcome').textContent=p?(state.completedSessionCount==null?copy().welcomeUnknown(p.preferences.displayName):copy().welcome(p.preferences.displayName,state.completedSessionCount)):'';}
 function lock(){el('athlete-save').disabled=busy||state?.status!=='Ready';el('athlete-delete').disabled=busy||(!state?.profile&&state?.status!=='Unavailable');}
 function render(){
  const p=state?.profile,preferences=p?.preferences||{...state?.defaults,units:'Metric',ageRange:'Unspecified',displayName:'',preferredEnvironment:'HolographicStudio',trainingDaysPerWeek:3,equipment:[]};

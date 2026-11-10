@@ -1,11 +1,14 @@
 import * as THREE from './vendor/three/three.module.js';
 import {createHumanCoach} from './studio-scene.mjs';
-import {createHolographicEnvironment,createHolographicStage,applyHologram} from './holographic-studio.mjs';
+import {createHolographicStage,applyHologram} from './holographic-studio.mjs';
+import {createEnvironmentManager} from './environment-manager.mjs';
 import {createStudioComposer} from './studio-composer.mjs';
+import {createProgressUI} from './progress-ui.mjs';
 import {createPersonalCoachUI} from './personal-coach-ui.mjs';
-import {coachPose} from './coach-motion.mjs';
-import {studioView,sessionSummary,canConfirmSpace,workoutLabel} from './studio-flow.mjs';
-import {inspectAR,requestMR,isTransparentSession} from './xr-session.mjs';
+import {coachPresentation} from './coach-presentation.mjs';
+import {studioCopy,applyStudioCopy} from './studio-copy.mjs';
+import {studioView,sessionSummary,canConfirmSpace} from './studio-flow.mjs';
+import {inspectAR,requestMR,isTransparentSession,inspectVR,requestWorldVR} from './xr-session.mjs';
 const el=id=>document.getElementById(id),host=el('canvas-host');
 let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{el('xr-status').textContent='WebGL açılamadı. Donanım hızlandırmalı tarayıcı kullan.';throw new Error('FORMA_WEBGL_UNAVAILABLE');}
@@ -13,7 +16,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');host.append(renderer.domElement);
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.05,50);camera.position.set(2.65,2.25,4.8);camera.lookAt(0,1.1,-1.2);
 scene.add(new THREE.HemisphereLight(0x91c6ff,0x05091b,.9));const sun=new THREE.DirectionalLight(0x9cdeff,2.8);sun.position.set(1,4,4);scene.add(sun);scene.fog=new THREE.FogExp2(0x080f21,.035);
-const environment=createHolographicEnvironment();const preview=environment.root;scene.add(preview);renderer.setClearColor(0x000000,0);
+const environment=createEnvironmentManager();environment.select('HolographicStudio');const preview=environment.root;scene.add(preview);renderer.setClearColor(0x000000,0);
 const content=new THREE.Group();content.position.z=-1.2;scene.add(content);
 const holographicStage=createHolographicStage();content.add(holographicStage);
 const coach=new THREE.Group();coach.position.set(-.50,.03,-.12);content.add(coach);
@@ -22,75 +25,95 @@ let human=null,previewPaused=false;
 createHumanCoach(coach,text=>el('asset-status').textContent=text).then(value=>{human=value;applyHologram(human.avatar);el('asset-status').textContent='Canlı 3B rehber · Temsili hareketler';}).catch(error=>{el('asset-status').textContent='3B koç yüklenemedi; seansı başlatma.';console.error(error);});
 function surface(width,height,pixelsW=1024,pixelsH=512){const canvas=document.createElement('canvas');canvas.width=pixelsW;canvas.height=pixelsH;const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:texture,transparent:true}));return {mesh:m,canvas,ctx:canvas.getContext('2d'),texture};}
 const panel=surface(.83,1.36,640,1024);panel.mesh.position.set(.78,1.38,-.20);content.add(panel.mesh);
-const cue=surface(1.55,.23,1536,230);cue.mesh.position.set(-.16,2.02,0);cue.mesh.visible=false;content.add(cue.mesh);
+const cue=surface(1.55,.38,1536,360);cue.mesh.position.set(-.16,2.02,0);cue.mesh.visible=false;content.add(cue.mesh);
 const timeline=surface(2.6,.23,1536,200);timeline.mesh.position.set(.06,.14,1.15);timeline.mesh.rotation.x=-.55;content.add(timeline.mesh);
 const buttons=[],rays=[],controllers=[],raycaster=new THREE.Raycaster(),rotation=new THREE.Matrix4();
 const pauseButtons=new WeakMap();
-let model=null,session=null,queue=Promise.resolve(),offline=false,localPaused=true,lastClock=performance.now(),lastFrame=performance.now(),phase=0,placed=false,lastPanel='',poseTracked=false,capability,lastTerminal=null;
+let model=null,session=null,queue=Promise.resolve(),offline=false,localPaused=true,lastClock=performance.now(),lastFrame=performance.now(),phase=0,placed=false,lastPanel='',poseTracked=false,capability,lastTerminal=null,sessionMode='ar',vrCapability,showXRProgress=false,xrFeedbackOutcome='Completed',xrFeedbackKey='';
 const personalUI=createPersonalCoachUI({send,confirmSpace,getModel:()=>model});
+const progressUI=createProgressUI({send,readState,getModel:()=>model});
 document.addEventListener('forma-athlete-updated',()=>readState());
 function wrap(ctx,text,x,y,maxWidth,lineHeight){let cursor=y;for(const paragraph of String(text).split('\n')){let line='';for(const word of paragraph.split(' ')){const test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,cursor);cursor+=lineHeight;line=word;}else line=test;}ctx.fillText(line,x,cursor);cursor+=lineHeight;}return cursor;}
 function paintPanel(){
- const state=model?.workout;
- el('session-state').textContent=`${workoutLabel(state?.state)} · ${Math.ceil(state?.remaining||0)} sn · ${state?.completedSets||0} set`;
- let text=offline?'Bağlantı kesildi. Hareketi durdur.':!model?'Koçuna bağlanılıyor…':model.setup.step!=='Complete'?'Başlamadan önce kısa kurulumu tamamla.':state?.state==='Ready'?'Alanını kontrol et. Birlikte başlayalım.':model.coach?.text||'';
+ const l=studioCopy(model);applyStudioCopy(l,model,session,sessionMode);if(human)el('asset-status').textContent=l.asset;
+ if(model?.athlete?.profile&&model?.personal?.greeting)el('athlete-welcome').textContent=model.personal.greeting;
+ progressUI.render(model);
+ const chosenEnvironment=model?.athlete?.profile?.preferences?.preferredEnvironment==='Forest'?'Forest':'HolographicStudio';
+ if(environment.select(chosenEnvironment)&&(!session||sessionMode==='vr')){scene.background=new THREE.Color(environment.background);scene.fog=new THREE.FogExp2(environment.background,environment.fogDensity);}
+ el('environment-select').value=chosenEnvironment;el('environment-select').disabled=!model?.athlete?.profile||!!model?.workout?.isRunning||model?.workout?.state==='Paused'||model?.personal?.session?.record?.outcome==='Interrupted';
+ const state=model?.workout?.state==='Ready'&&!model?.personal?.enabled?null:model?.workout;
+ el('session-state').textContent=state?`${l.states[state.state]||l.states.Ready} · ${Math.ceil(state.remaining||0)} s · ${state.completedSets||0}`:l.states.Ready;
+ let text=offline?l.offline:!model?l.loading:model.setup.step!=='Complete'?l.setupFirst:(!state&&!model?.personal?.enabled)||state?.state==='Ready'?l.ready:model.coach?.text||l.ready;
  if(model?.personal?.enabled && state?.state==='Work' && !model.personal.catalog?.find(e=>e.id===state.exerciseId)?.animation)text=personalUI.copy().fallback+' '+text;
- const signature=JSON.stringify({text,state,setup:model?.setup?.step,language:model?.setup?.profile?.language,session:!!session,offline,space:model?.gate?.space,athlete:model?.athlete?.revision,personal:model?.personal?{id:model.personal.recommendation?.id,state:model.personal.session?.state,feedback:model.personal.session?.record?.feedback?.length,save:model.personal.savePending}:null});if(signature===lastPanel)return;lastPanel=signature;
+ const signature=JSON.stringify({text,state,setup:model?.setup?.step,language:model?.setup?.profile?.language,session:!!session,offline,space:model?.gate?.space,historyAvailable:model?.historyAvailable,athlete:model?.athlete?.revision,personal:model?.personal?{status:model.personal.status,id:model.personal.recommendation?.id,state:model.personal.session?.state,feedback:model.personal.session?.record?.feedback?.length,save:model.personal.savePending}:null});if(signature===lastPanel)return;lastPanel=signature;
  const c=panel.ctx;c.clearRect(0,0,640,1024);
  c.fillStyle='rgba(7,22,46,.46)';c.beginPath();c.roundRect(4,4,632,1016,24);c.fill();
  c.strokeStyle='rgba(126,226,255,.45)';c.lineWidth=2;c.stroke();
  c.textAlign='left';c.fillStyle='#8deeff';c.font='30px sans-serif';c.fillText('FORMA / COACH',44,60);
- c.fillStyle='#d3e7f4';c.font='32px sans-serif';c.fillText('5 dakikalık başlangıç',44,104);
+ c.fillStyle='#d3e7f4';c.font='32px sans-serif';c.fillText(model?.personal?.enabled?l.plan:l.headline,44,104);
  const seconds=Math.ceil(state?.remaining||0),duration=state?.intervalSeconds||1;
  const progress=!state||state.state==='Ready'?1:Math.max(0,Math.min(1,seconds/duration));
  c.lineWidth=5;c.lineCap='round';c.strokeStyle='rgba(113,231,255,.13)';c.beginPath();c.arc(320,324,148,0,Math.PI*2);c.stroke();
  c.strokeStyle='#79f4ff';c.beginPath();c.arc(320,324,148,-Math.PI/2,-Math.PI/2+Math.PI*2*progress);c.stroke();
- c.fillStyle='#ebfcff';c.textAlign='center';c.font='500 78px sans-serif';c.fillText(state?.state&&state.state!=='Ready'?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'05:00',320,328);
- c.fillStyle='#9cb9d5';c.font='30px sans-serif';c.fillText(state?.state==='Rest'?'Dinlenme':state?.state==='Paused'?'Duraklatıldı':state?.state==='Completed'?'Tamamlandı':!state||state.state==='Ready'?'Seans süresi':'Aralık süresi',320,372);
- c.textAlign='left';c.fillStyle='#8deeff';c.font='25px sans-serif';c.fillText(workoutLabel(state?.state),44,555);
- c.fillStyle='#edfaff';c.font='36px sans-serif';wrap(c,state?.exerciseName||'Birlikte başlayalım.',44,609,540,43);
- c.fillStyle='#97b8ce';c.font='30px sans-serif';wrap(c,state?.state==='Ready'||!state?'Küçük adımlar. Rahat bir tempo.':text,44,700,540,35);
+ c.fillStyle='#ebfcff';c.textAlign='center';c.font='500 78px sans-serif';c.fillText(state?.state&&state.state!=='Ready'?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:model?.personal?.recommendation?.status==='Ready'?`${Math.floor(model.personal.recommendation.durationSeconds/60)}:${String(model.personal.recommendation.durationSeconds%60).padStart(2,'0')}`:'—',320,328);
+ c.fillStyle='#9cb9d5';c.font='30px sans-serif';c.fillText(state?.state==='Rest'?l.rest:state?.state==='Paused'?l.states.Paused:state?.state==='Completed'?l.states.Completed:!state||state.state==='Ready'?l.sessionDuration:l.timer,320,372);
+ c.textAlign='left';c.fillStyle='#8deeff';c.font='25px sans-serif';c.fillText(state?.state==='Work'?(state.stage==='WarmUp'?l.warm:state.stage==='Cooldown'?l.cool:l.exercise):l.states[state?.state]||l.states.Ready,44,555);
+ c.fillStyle='#edfaff';c.font='36px sans-serif';wrap(c,state?.exerciseName||l.plan,44,609,540,43);
+ c.save();c.beginPath();c.rect(36,670,568,178);c.clip();c.fillStyle='#97b8ce';c.font='30px sans-serif';wrap(c,state?.state==='Ready'||!state?l.ready:text,44,700,540,35);c.restore();
  const terminalSummary=sessionSummary(model);
 
  if(terminalSummary){
   c.clearRect(24,490,592,365);c.fillStyle='rgba(7,22,46,.8)';c.fillRect(24,490,592,365);
   c.fillStyle='#fff';c.font='72px sans-serif';c.fillText(String(terminalSummary.workSeconds),320,570);
-  c.font='30px sans-serif';c.fillText('saniye çalışma',320,610);
+  c.font='30px sans-serif';c.fillText(l.seconds+' / '+l.timer,320,610);
   c.font='64px sans-serif';c.fillText(String(terminalSummary.sets),320,638);
-  c.font='30px sans-serif';c.fillText('tamamlanan set',320,680);
-  c.fillStyle='#79f4ff';c.font='27px sans-serif';c.fillText(terminalSummary.completed?'Kendine zaman ayırdın.':'İstediğin anda durabilirsin.',320,766);
+  c.font='30px sans-serif';c.fillText(l.outcomes.Completed,320,680);
+  c.fillStyle='#79f4ff';c.font='27px sans-serif';c.fillText(terminalSummary.completed?l.completed:l.stopped,320,766);
  }
  // The silhouette is the same recorded video rendered as a diagram, never body tracking.
- c.textAlign='center';c.fillStyle='#c4f7ff';c.font='32px sans-serif';c.fillText(`Set ${state?.set||1} / ${state?.totalSets||3}`,320,900);c.fillStyle='#bfc2b8';c.font='23px sans-serif';c.fillText('3B rehber · Ölçüm değil',320,940);panel.texture.needsUpdate=true;
- const q=cue.ctx;q.clearRect(0,0,1536,230);q.fillStyle='rgba(28,32,31,.85)';q.beginPath();q.roundRect(0,0,1536,230,26);q.fill();q.textAlign='center';q.fillStyle='#79f4ff';q.font='30px sans-serif';q.fillText(model?.personal?.enabled?state?.exerciseName||'Planın hazır':state?.exerciseId==='march'?'Hafif yerinde yürüyüş':'Rahat omuz çevirme',768,54);q.fillStyle='#fff';q.font='35px sans-serif';wrap(q,text,768,112,1400,44);cue.texture.needsUpdate=true;
+ if(showXRProgress&&session&&model?.personal?.progress){
+  const progress=model.personal.progress;c.clearRect(24,490,592,365);c.fillStyle='rgba(7,22,46,.85)';c.fillRect(24,490,592,365);c.textAlign='left';c.fillStyle='#b3f3ff';c.font='34px sans-serif';
+  c.fillText(l.lang==='tr'?'Kayıtlarından ilerlemen':'Progress from records',44,545);c.font='30px sans-serif';
+  c.fillText((l.lang==='tr'?'Bugün: ':'Today: ')+progress.daily.completedSessions,44,610);c.fillText((l.lang==='tr'?'Bu hafta: ':'This week: ')+progress.weekly.completedSessions,44,665);c.fillText((l.lang==='tr'?'Bu ay: ':'This month: ')+progress.monthly.completedSessions,44,720);
+  c.fillText(`${progress.weekly.completedDays} / ${progress.weeklyTargetDays} `+(l.lang==='tr'?'antrenman günü':'training days'),44,780);c.font='23px sans-serif';c.fillText(l.lang==='tr'?'UTC takvimi · Tamamlanan seanslar':'UTC calendar · Completed sessions',44,830);
+ }
+ c.textAlign='center';c.fillStyle='#c4f7ff';c.font='32px sans-serif';c.fillText(state?(model?.personal?.session?`${l.interval} ${model.personal.session.index+1} / ${model.personal.session.record.blocks.length}`:`${l.exercise} ${state.set||1} / ${state.totalSets||1}`):l.plan,320,900);c.fillStyle='#bfc2b8';c.font='23px sans-serif';c.fillText(l.recorded,320,940);panel.texture.needsUpdate=true;
+ const q=cue.ctx;q.clearRect(0,0,1536,360);q.fillStyle='rgba(28,32,31,.85)';q.beginPath();q.roundRect(0,0,1536,360,26);q.fill();q.textAlign='center';q.fillStyle='#79f4ff';q.font='30px sans-serif';q.fillText(model?.personal?.enabled?state?.exerciseName||l.plan:state?.exerciseId==='march'?'Hafif yerinde yürüyüş':'Rahat omuz çevirme',768,54);q.fillStyle='#fff';q.font='35px sans-serif';wrap(q,text,768,112,1400,44);cue.texture.needsUpdate=true;
  const t=timeline.ctx;t.clearRect(0,0,1536,200);t.fillStyle='rgba(6,20,43,.70)';t.beginPath();t.roundRect(0,0,1536,200,24);t.fill();t.textAlign='center';
- const timelinePlan=model?.personal?.enabled?(model.plan||[]).slice(model.personal.session?.index||0,(model.personal.session?.index||0)+2):(model?.plan?.length?model.plan:model?.exercises||[]);
- const entries=[...timelinePlan.map(e=>[e.id,e.id==='march'?'Yerinde yürüyüş':e.id==='shoulders'?'Omuz çevirme':e.name,e.sets?`${e.sets} × ${e.workSeconds} saniye`:"Seans seç"]),['summary','Seans özeti','Yerel geçmiş']];const tileWidth=1536/entries.length;
- entries.forEach(([id,name,dose],i)=>{const active=id===state?.exerciseId||(id==='summary'&&state?.state==='Completed');t.fillStyle=active?'#79f4ff':'#b8d4ed';t.font='34px sans-serif';t.fillText(name,tileWidth*(i+.5),91);t.fillStyle='#afb4aa';t.font='25px sans-serif';t.fillText(dose,tileWidth*(i+.5),139);if(active){t.fillStyle='#79f4ff';t.fillRect(i*tileWidth+30,176,tileWidth-60,5);}});timeline.texture.needsUpdate=true;
- el('coach-cue').textContent=!state||state.state==='Ready'?'5 dakika · 3B stüdyo · Ekipmansız':text;
+ const timelinePlan=model?.personal?.enabled?(model.plan||[]).slice(model.personal.session?.index||0,(model.personal.session?.index||0)+2):[];
+ const entries=[...timelinePlan.map(e=>[e.id,model?.personal?.enabled?e.name:e.id==='march'?(l.lang==='tr'?'Yerinde yürüyüş':'Marching in place'):e.id==='shoulders'?(l.lang==='tr'?'Omuz çevirme':'Shoulder circles'):e.name,e.sets?`${e.sets} × ${e.workSeconds} s`:l.plan]),['summary',l.summary,l.history]];const tileWidth=1536/entries.length;
+ entries.forEach(([id,name,dose],i)=>{const active=model?.personal?.enabled?i===0:id===state?.exerciseId||(id==='summary'&&state?.state==='Completed');t.fillStyle=active?'#79f4ff':'#b8d4ed';t.font='34px sans-serif';t.fillText((model?.personal?.enabled&&i===1?l.next+': ':'')+name,tileWidth*(i+.5),91);t.fillStyle='#afb4aa';t.font='25px sans-serif';t.fillText(dose,tileWidth*(i+.5),139);if(active){t.fillStyle='#79f4ff';t.fillRect(i*tileWidth+30,176,tileWidth-60,5);}});timeline.texture.needsUpdate=true;
+ el('coach-cue').textContent=!state||state.state==='Ready'?l.ready:text;
 
- el('workout-title').textContent=!state||state.state==='Ready'?'Hareketinle aynı frekansta.':state?.state==='Completed'?'Seans tamamlandı':state?.state==='Aborted'?'Seans sonlandırıldı':model?.personal?.enabled?state?.exerciseName||'Bugünkü planın':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
- el('space-state').textContent=model?.gate?.space?'Alan onaylı':'Başlamak için alanını onayla';
- updateSetup();updateFlow();personalUI.render(model,!!session);
+ el('workout-title').textContent=!state||state.state==='Ready'?l.headline:state?.state==='Completed'?l.completed:state?.state==='Aborted'?l.stopped:model?.personal?.enabled?state?.exerciseName||'Bugünkü planın':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
+ el('space-state').textContent=model?.gate?.space?l.spaceReady:l.spaceNeed;
+ localizeWorldButtons(l);updateSetup();updateFlow();personalUI.render(model,!!session);
 }
-async function readState(){try{const r=await fetch('/api/state');if(!r.ok)throw new Error();model=await r.json();offline=false;el('connection-status').textContent='Çevrimdışı koç · Geçmiş bu cihazda';paintPanel();}catch{failure();}}
-function failure(){offline=true;localPaused=true;el('connection-status').textContent='Yerel motor bağlantısı kesildi. Hareketi durdur ve bağlantıyı kontrol et.';paintPanel();}
+async function readState(){try{const r=await fetch('/api/state');if(!r.ok)throw new Error();model=await r.json();offline=false;el('connection-status').textContent=studioCopy(model).connection;paintPanel();}catch{failure();}}
+function failure(){offline=true;localPaused=true;el('connection-status').textContent=studioCopy(model).offline;paintPanel();}
 function send(action,extra={}){
- const result=queue.then(async()=>{try{const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw new Error();model=data.state;offline=false;if(model.workout?.state==='Paused')localPaused=true;if((action==='resume'||action==='start'||action==='coachStart'||action==='coachFeedback')&&data.accepted){localPaused=false;lastClock=performance.now();}el('connection-status').textContent=model.notice||'Çevrimdışı koç · Geçmiş bu cihazda';paintPanel();return data.accepted;}catch{failure();return false;}});
+ const result=queue.then(async()=>{try{const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw new Error();model=data.state;offline=false;if(model.workout?.state==='Paused')localPaused=true;if((action==='resume'||action==='start'||action==='coachStart'||action==='coachFeedback')&&data.accepted){localPaused=false;lastClock=performance.now();}el('connection-status').textContent=model.notice||studioCopy(model).connection;paintPanel();return data.accepted;}catch{failure();return false;}});
  queue=result.catch(()=>false);return result;
 }
 function pause(){localPaused=true;previewPaused=true;return send('pause');}
-async function start(){if(!human){el('asset-status').textContent='Önce 3B koçun yüklenmesini bekle.';return;}previewPaused=false;if(model?.setup.step!=='Complete'){el('setup-panel').hidden=false;updateSetup();return;}if(model?.workout?.state==='Paused'){await send('resume');return;}if(model?.athlete?.profile){if(!model.personal?.recommendation)await send('coachRecommend');if(session){await send('coachStart');return;}personalUI.openPlan();return;}if(!await send('dailyFive')){el('asset-status').textContent=model?.notice||'Bu program mevcut tercihlerine uygun değil.';return;}await send('start');}
+async function start(){if(!human){el('asset-status').textContent=studioCopy(model).assetWait;return;}previewPaused=false;if(!model?.athlete?.profile){el('athlete-open').click();return;}if(model?.setup.step!=='Complete'){el('setup-panel').hidden=false;updateSetup();return;}if(model?.workout?.state==='Paused'){await send('resume');return;}if(model?.athlete?.profile){if(!model.personal?.recommendation)await send('coachRecommend');if(session){await send('coachStart');return;}personalUI.openPlan();return;}if(!await send('dailyFive')){el('asset-status').textContent=model?.notice||'Bu program mevcut tercihlerine uygun değil.';return;}await send('start');}
 function button(label,x,y,action,color='#313b3a'){
- const b=surface(.56,.115,768,160);b.mesh.position.set(x,y,.012);const c=b.ctx;c.fillStyle=color;c.fillRect(0,0,768,160);c.fillStyle='#fff';c.font='500 40px sans-serif';c.textAlign='center';c.fillText(label,384,96);b.texture.needsUpdate=true;b.mesh.userData.action=action;content.add(b.mesh);buttons.push(b.mesh);b.mesh.visible=false;return b;
+ const b=surface(.56,.115,768,160);b.mesh.position.set(x,y,.012);const c=b.ctx;c.fillStyle=color;c.fillRect(0,0,768,160);c.fillStyle='#fff';c.font='500 40px sans-serif';c.textAlign='center';c.fillText(label,384,96);b.texture.needsUpdate=true;b.mesh.userData.action=action;b.mesh.userData.label=label;b.mesh.userData.surface=b;b.mesh.userData.color=color;content.add(b.mesh);buttons.push(b.mesh);b.mesh.visible=false;return b;
 }
 button('Alanı onayla',-1.12,.64,confirmSpace);button('Seans öner',-1.12,.47,()=>send(model?.athlete?.profile?'coachRecommend':'dailyQuick'));
 button('Başlat / Devam',-1.12,.30,start,'#71652f');button('Ⅱ  DURAKLAT',1.02,1.94,pause,'#6c3a32');
 button('Seansı bitir',1.02,.47,()=>send('stop'));button('XR çıkış',1.02,.30,async()=>{await pause();if(session)await session.end();});
 button('Koçu yerleştir',-1.12,.13,()=>{place();pause();send('confirmSpace',{enabled:false});});
+button('İlerlemem',1.02,.13,()=>{showXRProgress=!showXRProgress;lastPanel='';paintPanel();});
 function xrFeedback(outcome,difficulty,discomfort=false){const s=model?.personal?.session;if(!s?.awaitingFeedback)return;return send('coachFeedback',{value:{blockIndex:s.index,exerciseId:s.record.blocks[s.index].exerciseId,outcome,difficulty,repetitions:null,discomfort}});}
-for(let i=1;i<=5;i++){const b=button('Tamam · '+i,-1.45,1.8-i*.13,()=>xrFeedback('Completed',i));b.mesh.userData.feedback=true;}
-for(const [label,y,action] of [['Kısmen · 3',.97,()=>xrFeedback('Partial',3)],['Atladım',.84,()=>xrFeedback('Skipped',null)],['Rahatsızlık',.71,()=>xrFeedback('Partial',5,true)]]){const b=button(label,-1.45,y,action);b.mesh.userData.feedback=true;}
+for(let i=1;i<=5;i++){const b=button('Tamam · '+i,-1.45,1.8-i*.13,()=>xrFeedback(xrFeedbackOutcome,i));b.mesh.userData.feedback=true;}
+for(const [label,y,action] of [['Kısmen · 3',.97,()=>{xrFeedbackOutcome=xrFeedbackOutcome==='Completed'?'Partial':'Completed';worldLabelLanguage='';localizeWorldButtons(studioCopy(model));}],['Atladım',.84,()=>xrFeedback('Skipped',null)],['Rahatsızlık',.71,()=>xrFeedback('Skipped',null,true)]]){const b=button(label,-1.45,y,action);b.mesh.userData.feedback=true;}
+let worldLabelLanguage='';
+function localizeWorldButtons(l){
+ if(worldLabelLanguage===l.lang)return;worldLabelLanguage=l.lang;
+ const fixed={'Alanı onayla':l.confirmShort,'Seans öner':l.plan,'Başlat / Devam':l.start+' / '+l.resume,'Ⅱ  DURAKLAT':'Ⅱ '+l.pause,'Seansı bitir':l.stop,'XR çıkış':l.exitXR,'Koçu yerleştir':l.reposition,'Kısmen · 3':xrFeedbackOutcome==='Completed'?(l.lang==='tr'?'Kısmen seç':'Use partial'):(l.lang==='tr'?'Tamamlandı seç':'Use completed'),'Atladım':l.outcomes.Skipped,'Rahatsızlık':l.lang==='tr'?'Rahatsızlık · atla / dur':'Discomfort · skip / stop','İlerlemem':l.lang==='tr'?'İlerlemem':'Progress'};
+ for(const mesh of buttons){const source=mesh.userData.label,b=mesh.userData.surface,text=source.startsWith('Tamam ·')?(xrFeedbackOutcome==='Partial'?(l.lang==='tr'?'Kısmen · ':'Partial · '):(l.lang==='tr'?'Tamam · ':'Completed · '))+source.split('·')[1].trim():fixed[source]||source;const c=b.ctx;c.clearRect(0,0,768,160);c.fillStyle=mesh.userData.color;c.fillRect(0,0,768,160);c.fillStyle='#fff';c.font='500 40px sans-serif';c.textAlign='center';c.fillText(text,384,96);b.texture.needsUpdate=true;}
+}
 function choose(origin,direction){raycaster.set(origin,direction);const hit=raycaster.intersectObjects(buttons.filter(b=>b.visible),false)[0];if(hit)hit.object.userData.action();}
 for(let i=0;i<2;i++){
  const controller=renderer.xr.getController(i);scene.add(controller);controllers.push(controller);
@@ -109,55 +132,74 @@ renderer.domElement.addEventListener('pointermove',e=>{
 });
 renderer.domElement.addEventListener('pointercancel',()=>{drag=null;});
 renderer.domElement.addEventListener('pointerup',e=>{if(drag&&!drag.moved&&!session){const rect=renderer.domElement.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=raycaster.intersectObjects(buttons.filter(b=>b.visible),false)[0];hit?.object.userData.action();}drag=null;});
+el('environment-select').onchange=()=>send('coachEnvironment',{value:el('environment-select').value});
 el('confirm-space').onclick=confirmSpace;el('prepare').onclick=()=>model?.athlete?.profile?el('personal-plan-open').click():send('dailyQuick');el('start').onclick=start;el('pause').onclick=pause;el('stop').onclick=()=>send('stop');el('reposition').onclick=()=>{place();pause();send('confirmSpace',{enabled:false});};
 el('leave-xr').onclick=async()=>{await pause();await session?.end();};
-el('space-confirm').onchange=()=>{el('enter-xr').disabled=!capability?.supported||!el('space-confirm').checked;};
-el('enter-xr').onclick=async()=>{
- let requested;
+el('space-confirm').onchange=()=>{el('enter-xr').disabled=!capability?.supported||!el('space-confirm').checked;el('enter-vr').disabled=!vrCapability?.supported||!el('space-confirm').checked;};
+async function enterImmersive(mode){
+ let requested;const l=studioCopy(model),virtual=mode==='vr';
+ if(!model?.athlete?.profile){el('athlete-open').click();return;}
  if(model?.setup?.step!=='Complete'){el('setup-panel').hidden=false;updateSetup();return;}
+ const active=model?.workout?.isRunning||model?.workout?.state==='Paused';
+ if(virtual&&active){el('xr-status').textContent=l.lang==='tr'?'VR modundan önce açık seansı bitir.':'End the active session before entering VR.';return;}
  try{
-  requested=await requestMR(navigator.xr,{secure:isSecureContext,confirmed:el('space-confirm').checked,noEquipment:el('space-confirm').checked});
-  if(!isTransparentSession(requested)){await requested.end();throw new Error('Şeffaf AR bileşimi doğrulanamadı. Opaque VR moduna geçilmedi.');}
-  session=requested;el('xr-mode').textContent='Quest WebXR · Ekipmansız';buttons.forEach(b=>b.visible=true);cue.mesh.visible=true;await pause();await send('signal',{field:'tracking',enabled:false});placed=false;poseTracked=false;preview.visible=false;holographicStage.userData.setImmersive(true);scene.background=null;scene.fog=null;renderer.setClearColor(0x000000,0);
+  const options={secure:isSecureContext,confirmed:el('space-confirm').checked,noEquipment:el('space-confirm').checked,sessionActive:!!active};
+  // Keep the request directly in the button gesture. AR never falls back to VR.
+  requested=await (virtual?requestWorldVR(navigator.xr,options):requestMR(navigator.xr,options));
+  if(!virtual&&!isTransparentSession(requested)){await requested.end();throw new Error('Transparent AR composition required.');}
+  session=requested;sessionMode=mode;buttons.forEach(b=>b.visible=true);cue.mesh.visible=true;
+  if(!await pause())throw new Error('Could not pause safely.');if(!await send('signal',{field:'tracking',enabled:false}))throw new Error('Tracking reset failed.');if(!await send('virtualMode',{enabled:virtual,value:virtual}))throw new Error('Rendering mode rejected.');placed=false;poseTracked=false;
+  preview.visible=virtual;holographicStage.userData.setImmersive(!virtual);scene.background=virtual?new THREE.Color(environment.background):null;scene.fog=virtual?new THREE.FogExp2(environment.background,environment.fogDensity):null;renderer.setClearColor(0x000000,0);
   session.addEventListener('visibilitychange',()=>{const visible=session?.visibilityState==='visible';if(!visible)pause();send('signal',{field:'focus',enabled:visible});});
-  session.addEventListener('end',()=>{session=null;lastTerminal=null;el('xr-mode').textContent='Masaüstü önizleme · Ekipmansız';buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;preview.visible=true;holographicStage.userData.setImmersive(false);scene.background=new THREE.Color(0x080f21);scene.fog=new THREE.FogExp2(0x080f21,.035);el('leave-xr').hidden=true;el('enter-xr').hidden=false;el('space-confirm').checked=false;el('enter-xr').disabled=true;pause();el('xr-status').textContent='XR oturumu kapandı. Egzersiz duraklatıldı; otomatik devam yok.';paintPanel();});
-  await renderer.xr.setSession(session);await send('signal',{field:'passthrough',enabled:true});await send('signal',{field:'focus',enabled:session.visibilityState==='visible'});el('leave-xr').hidden=false;el('enter-xr').hidden=true;el('xr-status').textContent='Gerçek WebXR immersive-ar oturumu açık. Çevreni kontrol et; görünürlük kaybında dur.';
- }catch(error){if(requested)await requested.end().catch(()=>{});session=null;el('xr-mode').textContent='Masaüstü önizleme · Ekipmansız';buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;preview.visible=true;holographicStage.userData.setImmersive(false);scene.background=new THREE.Color(0x080f21);scene.fog=new THREE.FogExp2(0x080f21,.035);el('xr-status').textContent=error.message||'WebXR AR oturumu açılamadı.';}
-};
+  session.addEventListener('end',()=>{
+   session=null;lastTerminal=null;buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;showXRProgress=false;preview.visible=true;holographicStage.userData.setImmersive(false);scene.background=new THREE.Color(environment.background);scene.fog=new THREE.FogExp2(environment.background,environment.fogDensity);
+   el('leave-xr').hidden=true;el('enter-xr').hidden=false;el('enter-vr').hidden=false;el('space-confirm').checked=false;el('enter-xr').disabled=true;el('enter-vr').disabled=true;
+   pause();send('virtualMode',{enabled:false});send('signal',{field:'passthrough',enabled:false});el('xr-status').textContent=studioCopy(model).xrEnded;paintPanel();
+  });
+  await renderer.xr.setSession(session);await send('signal',{field:'passthrough',enabled:!virtual});await send('signal',{field:'focus',enabled:session.visibilityState==='visible'});
+  el('leave-xr').hidden=false;el('enter-xr').hidden=true;el('enter-vr').hidden=true;paintPanel();
+ }catch(error){
+  if(requested)await requested.end().catch(()=>{});session=null;buttons.forEach(b=>b.visible=false);cue.mesh.visible=false;showXRProgress=false;preview.visible=true;holographicStage.userData.setImmersive(false);scene.background=new THREE.Color(environment.background);scene.fog=new THREE.FogExp2(environment.background,environment.fogDensity);el('xr-status').textContent=l.xrError;console.warn('FORMA XR request failed',error.name);
+ }
+}
+el('enter-xr').onclick=()=>enterImmersive('ar');el('enter-vr').onclick=()=>enterImmersive('vr');
 async function confirmSpace(){
- if(!canConfirmSpace({immersive:!!session,tracked:poseTracked,visible:session?.visibilityState==='visible'})){el('xr-status').textContent='Takip ve görünürlük hazır değil. Dur ve yeniden kontrol et.';return false;}
+ if(!canConfirmSpace({immersive:!!session,tracked:poseTracked,visible:session?.visibilityState==='visible'})){el('xr-status').textContent=studioCopy(model).notTracked;return false;}
  // Desktop observations are explicitly synthetic. A headset's tracking signals come only from XRFrame.
- if(!session){await send('signal',{field:'tracking',enabled:true});await send('signal',{field:'passthrough',enabled:true});await send('signal',{field:'focus',enabled:!document.hidden});}
+ if(!session){if(!model?.workout?.isRunning&&model?.workout?.state!=='Paused')await send('virtualMode',{enabled:false});await send('signal',{field:'tracking',enabled:true});await send('signal',{field:'passthrough',enabled:true});await send('signal',{field:'focus',enabled:!document.hidden});}
  return await send('confirmSpace',{enabled:true});
 }
 async function newSession(){
  if(await send('dailyBack')){await send('confirmSpace',{enabled:false});el('summary-panel').hidden=true;previewPaused=false;}
 }
 function updateFlow(){
- const view=studioView(model,offline);el('primary-action').textContent=view.label;el('primary-action').disabled=!view.action;
+ const view=studioView(model,offline),l=studioCopy(model);el('primary-action').textContent=view.action==='setup'?l.setupFirst:view.action==='confirm'?l.confirm:view.action==='pause'?l.pause:view.action==='start'?(model?.workout?.state==='Paused'?l.resume:l.start):view.action==='new'?l.newSession:view.action==='connect'?l.connect:l.loading;
+ if(model&&!offline&&!model.athlete?.profile&&!model.workout?.isRunning&&model.workout?.state!=='Paused')el('primary-action').textContent=l.create;el('primary-action').disabled=!view.action;
  if(model?.personal?.savePending)el('primary-action').textContent=personalUI.copy().retry;else if(model?.personal?.session?.awaitingFeedback)el('primary-action').textContent=personalUI.copy().giveFeedback;
  el('pause').disabled=offline;
  el('preview-play').disabled=!!model?.workout?.state&&model.workout.state!=='Ready';
  el('stop').disabled=!model?.workout?.isRunning&&model?.workout?.state!=='Paused';
  const summary=sessionSummary(model);
  if(summary){
-  el('summary-title').textContent=summary.title;
-  el('summary-copy').textContent=`${summary.workSeconds} saniye çalışma · ${summary.sets} tamamlanan set.\nBu cihazda ${summary.completedSessions} tamamlanan seans.`;
-  el('summary-plan').textContent='Seans planı: '+summary.plan.join(' / ');
+  el('summary-title').textContent=summary.completed?l.completed:l.stopped;
+  el('summary-copy').textContent=l.summaryCopy(summary.workSeconds,summary.sets,summary.completedSessions);
+  el('personal-completion-advice').textContent=model?.personal?.nextRecommendation?.reasons?.join(' ')||'';
+  el('summary-plan').textContent=l.summaryPlan+(model?.personal?.enabled?(model.plan||[]).map(x=>x.name).join(' / '):summary.plan.join(' / '));
   if(lastTerminal!==model.workout.state){el('summary-panel').hidden=!!session;lastTerminal=model.workout.state;}
  }else{lastTerminal=null;el('summary-panel').hidden=true;}
  const list=el('history-list');list.replaceChildren();
- const rows=[...(model?.personal?.history||[]).map(r=>({...r,outcome:r.outcome==='Cancelled'?'Aborted':r.outcome,activeSeconds:r.timedActiveSeconds,completedSets:r.feedback.filter(f=>f.outcome==='Completed').length})),...(model?.history||[])].sort((a,b)=>new Date(b.startedUtc)-new Date(a.startedUtc));
- if(!rows.length){const p=document.createElement('p');p.textContent='Henüz seans yok. Tamamlanan ve yarıda bitirilen seansların burada görünür.';list.append(p);}
+ const rows=[...(model?.personal?.history||[]).map(r=>({...r,outcome:r.outcome==='Cancelled'?'Aborted':r.outcome,activeSeconds:r.timedActiveSeconds,completedSets:r.feedback.filter(f=>f.outcome==='Completed').length})),...(model?.history||[]).filter(r=>model?.fixtureData||!r.isTestData)].sort((a,b)=>new Date(b.startedUtc)-new Date(a.startedUtc));
+ if(!rows.length||model.historyAvailable===false){const p=document.createElement('p');p.textContent=model.historyAvailable===false?l.historyUnavailable:l.emptyHistory;list.append(p);}
  for(const row of rows.slice(0,8)){
   const item=document.createElement('article'),title=document.createElement('strong'),detail=document.createElement('p');
-  title.textContent=row.outcome==='Completed'?'Tamamlandı':row.outcome==='Aborted'?'Sonlandırıldı':row.outcome==='Skipped'?'Atlandı':'Yarıda kaldı';
-  const date=new Date(row.startedUtc);detail.textContent=`${Number.isNaN(date.getTime())?'Tarih yok':date.toLocaleDateString('tr-TR')} · ${Math.floor(row.activeSeconds||0)} sn çalışma · ${row.completedSets||0} set`;
+  title.textContent=l.outcomes[row.outcome]||l.outcomes.Interrupted;
+  const date=new Date(row.startedUtc);detail.textContent=`${Number.isNaN(date.getTime())?'Tarih yok':date.toLocaleDateString(l.lang)} · ${Math.floor(row.activeSeconds||0)} s · ${row.completedSets||0}`;
   item.append(title,detail);list.append(item);
  }
 }
 el('primary-action').onclick=async()=>{
  if(model?.personal?.savePending){await send('coachRetrySave');return;}if(model?.personal?.session?.awaitingFeedback){personalUI.openFeedback();return;}
+ if(model&&!offline&&!model.athlete?.profile&&!model.workout?.isRunning&&model.workout?.state!=='Paused'){el('athlete-open').click();return;}
  const action=studioView(model,offline).action;
  if(action==='connect'){await readState();if(!offline)await pause();}
  else if(action==='setup'){el('setup-panel').hidden=false;updateSetup();}
@@ -172,34 +214,36 @@ el('summary-close').onclick=()=>{el('summary-panel').hidden=true;};
 el('history-open').onclick=()=>{updateFlow();el('history-panel').hidden=false;};
 el('history-close').onclick=()=>{el('history-panel').hidden=true;};
 function updateSetup(){
- if(!model)return;const setup=model.setup;el('setup-step').textContent=setup.step==='Complete'?'Kurulum tamamlandı':setup.title;
- el('setup-copy').textContent=setup.step==='Review'?'Bu 3B stüdyo programı: 5 dakika, 10 saniye tanışma, 6 × 30 saniye hareket ve 5 × 22 saniye dinlenme. Her başlangıçta alanını onayla.':setup.step==='Safety'?'Çevrende insan, evcil hayvan veya engel olmadığını kontrol et. Rahatsızlık hissedersen dur. Bu demo ekipmansızdır.':setup.body;
- el('safety-checks').hidden=setup.step!=='Safety';el('setup-next').textContent=setup.step==='Review'?'Kaydet ve koçuma dön':setup.step==='Complete'?'Koçuma dön':'Devam et';
+ if(!model)return;const setup=model.setup,l=studioCopy(model);el('setup-step').textContent=l.setupTitles[setup.step];
+ el('setup-copy').textContent=setup.step==='Safety'?l.setupSafety:l.setupBodies[setup.step]||'';
+ el('safety-checks').hidden=setup.step!=='Safety';el('setup-next').textContent=setup.step==='Review'?l.setupSave:setup.step==='Complete'?l.setupReturn:l.setupNext;
 }
+el('setup-profile-link').onclick=event=>{event.preventDefault();el('setup-panel').hidden=true;el('athlete-open').click();};
 el('controls-open').onclick=()=>{el('control-drawer').hidden=!el('control-drawer').hidden;};
 el('preview-play').hidden=true;
 el('setup-open').onclick=()=>{el('setup-panel').hidden=false;updateSetup();};
 el('setup-close').onclick=()=>{el('setup-panel').hidden=true;};
 el('setup-next').onclick=async()=>{
  if(model?.setup?.step==='Complete'){el('setup-panel').hidden=true;return;}
- if(model?.setup?.step==='Welcome')await send('edit',{field:'language',value:'tr'});
+ if(model?.setup?.step==='Welcome')await send('edit',{field:'language',value:studioCopy(model).lang});
  if(model?.setup?.step==='Safety'){
-  if(!el('setup-ack').checked||!el('setup-space').checked){el('setup-copy').textContent='Devam etmek için güvenlik ve açık alan kontrollerini kendin onayla.';return;}
+  if(!el('setup-ack').checked||!el('setup-space').checked){el('setup-copy').textContent=studioCopy(model).setupError;return;}
   await send('safety',{field:'ack',enabled:true});await send('safety',{field:'space',enabled:true});
  }
  await send(model?.setup?.step==='Review'?'finish':'next');if(model?.setup?.step==='Complete')el('setup-panel').hidden=true;
 };
-window.addEventListener('keydown',e=>{if(e.code==='Space'&&document.activeElement?.tagName!=='INPUT'){e.preventDefault();pause();}});
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&!document.activeElement?.closest('input,textarea,select,button,[contenteditable=true]')){e.preventDefault();pause();}});
 document.addEventListener('visibilitychange',()=>{if(!session){if(document.hidden)pause();send('signal',{field:'focus',enabled:!document.hidden});}});
-scene.background=new THREE.Color(0x080f21);
+scene.background=new THREE.Color(environment.background);
 renderer.setAnimationLoop((now,frame)=>{
  const dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
  if(session&&frame){const reference=renderer.xr.getReferenceSpace();const tracked=!!reference&&!!frame.getViewerPose(reference);if(tracked!==poseTracked){poseTracked=tracked;if(!tracked)pause();send('signal',{field:'tracking',enabled:tracked});}if(tracked&&!placed)place();for(const source of session.inputSources){const pressed=!!source.gamepad?.buttons[5]?.pressed;if(pressed&&!pauseButtons.get(source))pause();pauseButtons.set(source,pressed);}}
- const awaiting=!!model?.personal?.session?.awaitingFeedback;for(const b of buttons)b.visible=!!session && (b.userData.feedback?awaiting:!awaiting||b.position.x>=0);
- const pose=coachPose(model?.workout,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden,reduced:!!model?.setup?.profile?.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches});
- human?.update(pose.phase,pose.moving,pose.exercise,pose.reduced,dt);
+ const feedbackSession=model?.personal?.session;const feedbackIdentity=feedbackSession?.awaitingFeedback?feedbackSession.id+':'+feedbackSession.index:'';if(feedbackIdentity!==xrFeedbackKey){xrFeedbackKey=feedbackIdentity;xrFeedbackOutcome='Completed';worldLabelLanguage='';localizeWorldButtons(studioCopy(model));}
+ const awaiting=!!feedbackSession?.awaitingFeedback;for(const b of buttons)b.visible=!!session && (b.userData.feedback?awaiting:!awaiting||b.position.x>=0);
+ const pose=coachPresentation(model,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden,reduced:!!model?.setup?.profile?.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches});
+ human?.update(pose.phase,pose.moving,pose.exercise,pose.reduced,dt,pose.state);host.dataset.coachState=pose.state;
 
  if(now-lastClock>=250){const elapsed=(now-lastClock)/1000;lastClock=now;if(model?.workout?.isRunning&&!localPaused&&!offline&&(session?session.visibilityState==='visible':!document.hidden)){if(elapsed>1.5)pause();else send('tick',{seconds:elapsed});}}
  if(session)renderer.render(scene,camera);else composer.render(scene,camera);
 });
-await readState();if(model?.workout?.isRunning)await pause();await send('signal',{field:'focus',enabled:!document.hidden});capability=await inspectAR(navigator.xr,isSecureContext);el('xr-status').textContent=capability.reason;el('enter-xr').disabled=!capability.supported||!el('space-confirm').checked;paintPanel();
+await readState();if(model?.workout?.isRunning)await pause();await send('signal',{field:'focus',enabled:!document.hidden});capability=await inspectAR(navigator.xr,isSecureContext);vrCapability=await inspectVR(navigator.xr,isSecureContext);el('xr-status').textContent=capability.supported?studioCopy(model).xrAvailable:studioCopy(model).xrUnavailable;el('enter-xr').disabled=!capability.supported||!el('space-confirm').checked;paintPanel();

@@ -37,3 +37,11 @@ test('photographic demo serves local packed video, alpha metadata and generated 
  const video=await fetch(base+'/assets/studio/coach-packed.mp4',{headers:{Range:'bytes=0-31'}});assert.equal(video.status,206);assert.match(video.headers.get('content-type'),/video\/mp4/);assert.equal((await video.arrayBuffer()).byteLength,32);
  const meta=await (await fetch(base+'/assets/studio/coach-video.json')).json();assert.ok(meta.width>0&&meta.height>0);assert.equal(meta.alphaLayout,'rgb-left-alpha-right');
 });
+
+test('VR Worlds entry is explicit, equipment-free and never an automatic MR fallback',async()=>{
+ const {requestWorldVR,inspectVR}=await import('../../tools/WebSimulation/wwwroot/xr-session.mjs');let calls=[];
+ const xr={isSessionSupported:async mode=>mode==='immersive-vr',requestSession:async(mode,options)=>{calls.push({mode,options});return {mode};}};
+ assert.equal((await inspectVR(xr,true)).supported,true);
+ for(const options of [{secure:false,confirmed:true,noEquipment:true},{secure:true,confirmed:false,noEquipment:true},{secure:true,confirmed:true,noEquipment:false},{secure:true,confirmed:true,noEquipment:true,sessionActive:true}])await assert.rejects(requestWorldVR(xr,options));
+ assert.equal(calls.length,0);await requestWorldVR(xr,{secure:true,confirmed:true,noEquipment:true});assert.equal(calls[0].mode,'immersive-vr');assert.deepEqual(calls[0].options.requiredFeatures,['local-floor']);
+});

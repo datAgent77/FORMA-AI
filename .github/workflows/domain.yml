@@ -19,4 +19,6 @@ jobs:
         with:
           node-version: '22'
       - run: bash tools/test-web-simulation.sh
+      - run: node tools/test-athlete-restart.mjs
+      - run: node tools/test-personal-coach-restart.mjs
       - run: python3 tools/validate-source.py

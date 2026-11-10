@@ -23,6 +23,7 @@ public sealed partial class Simulation
     SessionRecord record;
     readonly SafetyGate gate=new SafetyGate{HasFocus=true,TrackingReady=true,PassthroughReady=true};
     readonly List<SessionRecord> history;
+    bool legacyHistoryUnavailable;
     readonly List<string> events=new List<string>();
     string notice="";
     bool closed;
@@ -40,8 +41,9 @@ public sealed partial class Simulation
     bool SetupReady=>!LoadBlocked && flow.Step==OnboardingStep.Complete;
     void LoadProfile()
     {
+        if(history!=null){var disk=LoadHistory();history.Clear();history.AddRange(disk);}
         var loaded=profiles.Load();loadStatus=loaded.Status;flow=new OnboardingFlow(profiles,loaded.Profile);
-        workout=null;record=null;gate.EnvironmentConfirmed=false;closed=false;
+        workout=null;record=null;gate.EnvironmentConfirmed=false;gate.EquipmentFreeVirtualMode=false;closed=false;
         personalSession=null;personalRecommendation=null;personalMode=false;
         InitializeDaily();
         if(SetupReady)PrepareWorkout();
@@ -59,6 +61,7 @@ public sealed partial class Simulation
     }
     public bool Act(SimulationAction a)
     {
+        if(a==null || string.IsNullOrWhiteSpace(a.Action))throw new ArgumentException("Action required.");
         bool accepted=false;notice="";
         if(a.Action.StartsWith("coach",StringComparison.Ordinal))return PersonalAction(a);
         if(personalMode && (a.Action=="tick" || a.Action=="advance" || a.Action=="pause" || a.Action=="resume" || a.Action=="stop" || a.Action=="exit"))return PersonalAction(a);
@@ -93,9 +96,14 @@ public sealed partial class Simulation
                 if(!available.Exercises.Any(e=>e.Id=="march"?selectMarch:selectShoulders))
                 {selectMarch=oldMarch;selectShoulders=oldShoulders;return Reject("Keep at least one compatible movement selected.");}
                 Persist();PrepareWorkout();accepted=true;break;
+            case "virtualMode":
+                if((workout?.IsRunning==true || personalSession?.IsRunning==true) && gate.EquipmentFreeVirtualMode!=a.Enabled)return Reject("End the active session before changing rendering mode.");
+                if(a.Enabled && (a.Value.ValueKind!=JsonValueKind.True))return Reject("Explicit equipment-free confirmation required.");
+                gate.EquipmentFreeVirtualMode=a.Enabled;gate.EnvironmentConfirmed=false;accepted=true;break;
             case "confirmSpace":gate.EnvironmentConfirmed=a.Enabled;accepted=true;break;
             case "start":
                 if(!SetupReady || closed)return Reject("Finish setup before entering a workout.");
+                if(legacyHistoryUnavailable)return Reject("Stored history is unreadable. Restore or export it before training.");
                 if(SessionActive)return Reject("A workout is already running or paused.");
                 if(!gate.CanExercise)return Reject("Confirm clear space and restore every simulated readiness signal.");
                 if(readiness.concern!=SafetyConcern.NoneReported)return Reject("A reported safety concern blocks exercise. Stop and seek appropriate advice.");
@@ -108,7 +116,7 @@ public sealed partial class Simulation
                 accepted=workout.Start(gate.CanExercise);
                 if(accepted)
                 {
-                    record=new SessionRecord{sessionId=Guid.NewGuid().ToString("N"),planId=workout.Plan.Id,startedUtc=DateTime.UtcNow.ToString("O")};
+                    record=new SessionRecord{isTestData=FixtureMode,sessionId=Guid.NewGuid().ToString("N"),planId=workout.Plan.Id,startedUtc=DateTime.UtcNow.ToString("O")};
                     Persist();Log("Workout started by shared WorkoutMachine.");
                 }
                 break;
@@ -176,12 +184,20 @@ public sealed partial class Simulation
     string HistoryPath=>Path.Combine(root,"simulation-history.json");
     List<SessionRecord> LoadHistory()
     {
-        try{return File.Exists(HistoryPath)?JsonSerializer.Deserialize<List<SessionRecord>>(File.ReadAllText(HistoryPath),SimulationJson.Options)??new List<SessionRecord>():new List<SessionRecord>();}
-        catch(JsonException){return new List<SessionRecord>();}
+        legacyHistoryUnavailable=false;
+        try
+        {
+            if(!File.Exists(HistoryPath))return new List<SessionRecord>();
+            var records=JsonSerializer.Deserialize<List<SessionRecord>>(File.ReadAllText(HistoryPath),SimulationJson.Options);
+            if(records==null || records.Any(r=>r==null || r.schemaVersion!=1 || string.IsNullOrWhiteSpace(r.sessionId) || !double.IsFinite(r.activeSeconds) || r.activeSeconds<0 || r.completedSets<0))throw new JsonException();
+            return records;
+        }
+        catch(Exception e) when(e is JsonException || e is IOException || e is UnauthorizedAccessException){legacyHistoryUnavailable=true;return new List<SessionRecord>();}
     }
     void Persist()
     {
         if(record==null || workout==null)return;
+        var diskHistory=LoadHistory();if(legacyHistoryUnavailable)throw new IOException("History is unreadable; original file preserved.");history.Clear();history.AddRange(diskHistory);
         record.activeSeconds=workout.ActiveSeconds;record.completedSets=workout.CompletedSets;
         bool terminal=workout.State==WorkoutState.Completed || workout.State==WorkoutState.Aborted;
         if(terminal && record.outcome!=workout.State.ToString())gate.EnvironmentConfirmed=false;
@@ -194,7 +210,7 @@ public sealed partial class Simulation
         File.Move(temporary,HistoryPath,true);
     }
     void Log(string text){events.Insert(0,text);if(events.Count>12)events.RemoveAt(12);}
-    public byte[] Export()=>Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{simulationOnly=true,profile=flow.Draft,sessions=history,athlete=AthleteExport(),personalTraining=TrainingStore.Raw()},SimulationJson.Options));
+    public byte[] Export()=>Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{simulationOnly=true,fixtureData=Environment.GetEnvironmentVariable("FORMA_SIM_FIXTURE_DATA")=="1",profile=flow.Draft,sessions=history,athlete=AthleteExport(),personalTraining=TrainingStore.Raw()},SimulationJson.Options));
     public object Snapshot()
     {
         var p=flow.Draft;
@@ -209,16 +225,16 @@ public sealed partial class Simulation
             body=string.Join("\n",body.Split('\n').Take(2))+"\n"+(p.language=="tr"?"Fare/dokunma ile seç; boşluk tuşu ile duraklat. XR girdileri simüledir.":"Select with mouse or touch; Space pauses. XR inputs are simulated.");
         var compatible=new OfflineWorkoutRecommendations(new BeginnerWorkoutValidator()).Recommend(p);
         return new {
-            engine="Shared C# / .NET 8",simulationOnly=true,closed,notice,
+            engine="Shared C# / .NET 8",simulationOnly=true,fixtureData=Environment.GetEnvironmentVariable("FORMA_SIM_FIXTURE_DATA")=="1",closed,notice,
             setup=new{step=flow.Step.ToString(),index=(int)flow.Step,profile=p,title,body,flow.SafetyAcknowledged,flow.SpaceConfirmed,flow.CanFinish,flow.PersistenceBlocked,loadStatus=loadStatus.ToString(),loadBlocked=LoadBlocked},
-            gate=new{focus=gate.HasFocus,tracking=gate.TrackingReady,passthrough=gate.PassthroughReady,space=gate.EnvironmentConfirmed,ready=gate.CanExercise},
+            gate=new{focus=gate.HasFocus,tracking=gate.TrackingReady,passthrough=gate.PassthroughReady,space=gate.EnvironmentConfirmed,ready=gate.CanExercise,virtualEnvironment=gate.EquipmentFreeVirtualMode},
             writeFault=profiles.FailWrites,coaches=catalog.All,
             workout=personalMode?PersonalWorkoutSnapshot():workout==null?null:new{state=workout.State.ToString(),remaining=workout.Remaining,intervalSeconds=workout.CurrentIntervalSeconds,activeSeconds=workout.ActiveSeconds,completedSets=workout.CompletedSets,set=workout.SetNumber,totalSets=workout.Current.Sets,exerciseId=workout.Current.Id,exerciseName=workout.Current.Name,instructions=workout.Current.Guidance,workout.IsRunning},
             plan=personalMode?PersonalPlanSnapshot():workout==null?Array.Empty<object>():workout.Plan.Exercises.Select(e=>(object)new{id=e.Id,name=e.Name,sets=e.Sets,workSeconds=e.WorkSeconds}).ToArray(),
             compatible=compatible==null?Array.Empty<string>():compatible.Exercises.Select(e=>e.Name).ToArray(),
             coach=new{id=p.coachId,name=look.displayName,color=look.primaryColor,accent=look.accentColor,state=cue.State.ToString(),text=cue.Text},
             exercises=compatible==null?Array.Empty<object>():compatible.Exercises.Select(e=>(object)new{id=e.Id,name=e.Name,selected=e.Id=="march"?selectMarch:selectShoulders}).ToArray(),
-            history,events,daily=personalMode?PersonalSummarySnapshot():DailySnapshot(),athlete=AthleteSnapshot(),personal=PersonalSnapshot(),
+            history,historyAvailable=!legacyHistoryUnavailable,events,daily=personalMode?PersonalSummarySnapshot():DailySnapshot(),athlete=AthleteSnapshot(),personal=PersonalSnapshot(),
             labels=new Dictionary<string,string>{["next"]=SetupCopy.Get("next",p.language),["back"]=SetupCopy.Get("back",p.language),["skip"]=SetupCopy.Get("skip",p.language),["finish"]=SetupCopy.Get("finish",p.language),["ack"]=SetupCopy.Get("ack",p.language),["space"]=SetupCopy.Get("space",p.language)},
             options=new{
                 goals=Enum.GetValues<FitnessGoal>().Select(x=>new{value=x.ToString(),label=SetupCopy.Value(x,p.language)}),

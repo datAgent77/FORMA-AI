@@ -13,7 +13,7 @@ public sealed partial class Simulation
             var document=AthleteStore.Load();
             return new{status="Ready",schemaVersion=document.schemaVersion,revision=document.revision,profile=document.profile,error=(string)null,
                 legacySessionCount=history.Count,completedSessionCount=PersonalCompletionCount(),
-                defaults=new{language=flow.Draft.language,preferredMinutes=flow.Draft.preferredMinutes==0?5:flow.Draft.preferredMinutes,
+                defaults=new{language=flow.Draft.onboardingComplete?flow.Draft.language:"tr",preferredMinutes=flow.Draft.preferredMinutes==0?5:flow.Draft.preferredMinutes,
                     experience=flow.Draft.experience==ExperienceLevel.Skip?ExperienceLevel.New:flow.Draft.experience,movementLimits=flow.Draft.movementLimits,
                     primaryGoal=flow.Draft.goal==FitnessGoal.BuildRoutine?AthleteGoal.Consistency:flow.Draft.goal==FitnessGoal.GentleMovement?AthleteGoal.Mobility:AthleteGoal.GeneralFitness}};
         }
@@ -24,7 +24,9 @@ public sealed partial class Simulation
     {
         if(SessionActive)throw new InvalidOperationException("End the active workout before changing athlete preferences.");
         if(request.Action!="save")throw new ArgumentException("Unknown athlete action.");
-        AthleteStore.Save(request.Profile,request.ExpectedRevision);return AthleteSnapshot();
+        var old=AthleteStore.Load().profile;AthleteStore.Save(request.Profile,request.ExpectedRevision);
+        if(old!=null && AdaptiveTrainingEngine.TrainingKey(old.preferences)!=AdaptiveTrainingEngine.TrainingKey(request.Profile)){personalRecommendation=null;personalMode=false;}
+        return AthleteSnapshot();
     }
     public void DeleteAthlete(AthleteRequest request)
     {
@@ -57,7 +59,7 @@ public sealed partial class Simulation
         catch(Exception e) when(e is IOException || e is UnauthorizedAccessException){return false;}
     }
     int? PersonalCompletionCount()
-    {try{return history.Count(x=>x.outcome=="Completed")+TrainingStore.Load().sessions.Count(x=>x.outcome=="Completed");}catch(IOException){return null;}}
+    {try{return Memory(TrainingStore.Load()).CompletedCount;}catch(IOException){return null;}}
     object AthleteExport()=>new{schemaVersion=2,data=AthleteStore.Raw(),source="local-manual-profile",legacySetup=File.Exists(Path.Combine(root,"product-profile.json"))?File.ReadAllText(Path.Combine(root,"product-profile.json")):null,
         legacyHistory=File.Exists(HistoryPath)?File.ReadAllText(HistoryPath):null};
 }

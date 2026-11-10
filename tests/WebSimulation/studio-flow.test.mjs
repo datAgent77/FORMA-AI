@@ -57,3 +57,13 @@ test('3D animation uses authoritative interval time and stops for pause, focus o
  for(const options of [{localPaused:true},{localPaused:false,offline:true},{localPaused:false,visible:false},{localPaused:false,reduced:true}])assert.equal(coachPose(state,options).moving,false);
  assert.equal(coachPose({...state,state:'Rest'},{localPaused:false}).moving,false);
 });
+
+test('coach presentation has explicit states and uses written fallback rather than wrong motion for unsupported exercises',async()=>{
+ const {coachPresentation,CoachPresentationStates}=await import('../../tools/WebSimulation/wwwroot/coach-presentation.mjs');
+ const options={localPaused:false,offline:false,visible:true,reduced:false};
+ assert.deepEqual(CoachPresentationStates,['IDLE','GREETING','DEMONSTRATING','EXERCISING','RESTING','CELEBRATING']);
+ assert.equal(coachPresentation({},options).state,'IDLE');assert.equal(coachPresentation({athlete:{profile:{}}},options).state,'GREETING');
+ assert.equal(coachPresentation({workout:{state:'Introduction',exerciseId:'march',remaining:5,intervalSeconds:10}},options).state,'DEMONSTRATING');
+ const fallback=coachPresentation({workout:{state:'Work',exerciseId:'squat',remaining:10,intervalSeconds:20}},options);assert.equal(fallback.instructionalFallback,true);assert.equal(fallback.moving,false);assert.equal(fallback.state,'EXERCISING');
+ assert.equal(coachPresentation({workout:{state:'Paused',exerciseId:'march'}},options).state,'RESTING');assert.equal(coachPresentation({workout:{state:'Completed'}},options).state,'CELEBRATING');
+});

@@ -11,3 +11,12 @@ export function requestMR(xr,{secure,confirmed,noEquipment}){
  return xr.requestSession('immersive-ar',{requiredFeatures:['local-floor']});
 }
 export function isTransparentSession(session){return session?.environmentBlendMode==='alpha-blend'||session?.environmentBlendMode==='additive';}
+// An explicit equipment-free Worlds action. Never called as an AR fallback.
+export async function inspectVR(xr,secure){
+ if(!secure||!xr)return {supported:false};
+ try{return {supported:await xr.isSessionSupported('immersive-vr')};}catch{return {supported:false};}
+}
+export function requestWorldVR(xr,{secure,confirmed,noEquipment,sessionActive=false}){
+ if(!secure||!xr||!confirmed||!noEquipment||sessionActive)return Promise.reject(new Error('Explicit equipment-free consent and no active workout are required.'));
+ return xr.requestSession('immersive-vr',{requiredFeatures:['local-floor']});
+}

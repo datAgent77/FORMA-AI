@@ -1,3 +1,11 @@
+> Current delivery (2026-11-10): **Personal Coach V1, WebXR first** — persistent athlete profile, guided feedback-based workouts, explainable adaptation, actual-data progress and Studio/Forest. [Implementation, evidence, limitations and Quest launch](docs/personal-coach-v1/DELIVERY.md). Four movement animations and physical Quest validation remain outstanding. Unity remains paused.
+
+```bash
+FORMA_SIM_PORT=5097 bash tools/run-web-simulation.sh
+```
+
+Open [Personal Coach demo](http://127.0.0.1:5097/xr.html). The historical milestone notes below are retained for context; the current delivery report takes precedence.
+
 > Visual revision (2026-11-06): holographic coach, curved glass studio, luminous floor and desktop bloom. [Delivery and verification](docs/holographic-studio/DELIVERY.md).
 
 > Current milestone (2026-11-05): real-time rigged 3D coach, geometric studio and five-minute beginner workout. [Audit and plan](docs/webxr-3d/AUDIT-AND-PLAN.md) · [Verification and limitations](docs/webxr-3d/DELIVERY.md). Earlier photographic-demo delivery notes are historical. Unity development remains paused.

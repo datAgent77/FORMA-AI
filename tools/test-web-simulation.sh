@@ -2,6 +2,7 @@
 set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 forma_dotnet="${FORMA_DOTNET:-dotnet}"
+export FORMA_SIM_FIXTURE_DATA=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_USE_POLLING_FILE_WATCHER=1
 export FORMA_SIM_PORT="${FORMA_SIM_PORT:-5079}"
 export FORMA_SIM_URL="http://127.0.0.1:$FORMA_SIM_PORT"
@@ -23,6 +24,7 @@ for attempt in $(seq 1 30); do
   sleep 1
 done
 if [[ "$ready" != true ]]; then cat "$simulation_data/host.log"; echo 'Simulator did not become ready.' >&2; exit 1; fi
+for forma_source in "$repo/tools/WebSimulation/wwwroot/"*.js "$repo/tools/WebSimulation/wwwroot/"*.mjs; do node --check "$forma_source"; done
 node --check "$repo/tools/WebSimulation/wwwroot/app.js"
 node --check "$repo/tools/WebSimulation/wwwroot/daily.js"
 node --test "$repo/tests/WebSimulation/"*.test.mjs

@@ -52,3 +52,10 @@ test('stored athlete movement exclusions block a conflicting legacy workout inst
  const c=await client();await oldCompletion(c);assert.equal((await c.post('/api/athlete',{action:'save',profile:{...profile,movementLimits:1},expectedRevision:0})).status,200);
  await c.act('dailyBack');await c.act('dailyFive');await c.act('confirmSpace',{enabled:true});const r=await c.act('start');assert.equal(r.accepted,false);assert.equal(r.state.workout.state,'Ready');assert.equal(r.state.history.filter(x=>x.outcome==='Completed').length,1);
 });
+
+test('unreadable legacy history is preserved and never silently replaced by a new workout',async()=>{
+ if(!process.env.FORMA_SIM_DATA)return;const c=await client();await oldCompletion(c);
+ const path=join(process.env.FORMA_SIM_DATA,c.id,'simulation-history.json'),raw='{unreadable legacy history';await writeFile(path,raw);
+ const reloaded=await c.post('/api/action',{action:'reload'});assert.equal(reloaded.status,400);assert.equal((await c.get('/api/state')).historyAvailable,false);
+ const saved=await c.post('/api/athlete',{action:'save',profile,expectedRevision:0});assert.equal(saved.status,200);assert.equal(saved.state.completedSessionCount,null);assert.equal((await c.get('/api/export')).athlete.legacyHistory,raw);assert.equal(await readFile(path,'utf8'),raw);
+});

@@ -11,6 +11,7 @@ namespace Forma.Domain
     [Serializable] public sealed class SessionRecord
     {
         public int schemaVersion=1;
+        public bool isTestData;
         public string sessionId;
         public string planId;
         public string startedUtc;
