@@ -1,3 +1,5 @@
+import {createMotionDiagnostics} from './motion-diagnostics.mjs';
+import {CoachingOrchestrator} from './motion-events.mjs';
 import {livingCoach,trackingCapabilities} from './living-coach.mjs';
 import {createCoachVoice,livingInstruction} from './coach-voice.mjs';
 import * as THREE from './vendor/three/three.module.js';
@@ -15,6 +17,7 @@ const el=id=>document.getElementById(id),host=el('canvas-host');
 let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{el('xr-status').textContent='WebGL açılamadı. Donanım hızlandırmalı tarayıcı kullan.';throw new Error('FORMA_WEBGL_UNAVAILABLE');}
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
+renderer.info.autoReset=false;
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');host.append(renderer.domElement);
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.05,50);camera.position.set(2.65,2.25,4.8);camera.lookAt(0,1.1,-1.2);
 scene.add(new THREE.HemisphereLight(0x91c6ff,0x05091b,.9));const sun=new THREE.DirectionalLight(0x9cdeff,2.8);sun.position.set(1,4,4);scene.add(sun);scene.fog=new THREE.FogExp2(0x080f21,.035);
@@ -24,7 +27,7 @@ const holographicStage=createHolographicStage();content.add(holographicStage);
 const coach=new THREE.Group();coach.position.set(-.24,0,0);content.add(coach);
 const composer=createStudioComposer(renderer);
 let human=null,previewPaused=false;
-createHumanCoach(coach,text=>el('asset-status').textContent=text).then(value=>{human=value;applyHologram(human.avatar);el('asset-status').textContent='Canlı 3B rehber · Temsili hareketler';}).catch(error=>{el('asset-status').textContent='3B koç yüklenemedi; seansı başlatma.';console.error(error);});
+createHumanCoach(coach,text=>el('asset-status').textContent=text).then(value=>{human=value;if(human.motionError){el('motion-asset-error').hidden=false;el('motion-asset-error').textContent='Diz animasyonu yüklenemedi / Knee animation unavailable: '+human.motionError;pause();}applyHologram(human.avatar);el('asset-status').textContent='Canlı 3B rehber · Temsili hareketler';}).catch(error=>{el('asset-status').textContent='3B koç yüklenemedi; seansı başlatma.';console.error(error);});
 function surface(width,height,pixelsW=1024,pixelsH=512){const canvas=document.createElement('canvas');canvas.width=pixelsW;canvas.height=pixelsH;const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:texture,transparent:true}));return {mesh:m,canvas,ctx:canvas.getContext('2d'),texture};}
 const panel=surface(.83,1.36,640,1024);panel.mesh.position.set(.78,1.38,-.20);content.add(panel.mesh);
 const cue=surface(1.55,.38,1536,360);cue.mesh.position.set(0,1.9,0);cue.mesh.visible=false;content.add(cue.mesh);
@@ -34,9 +37,12 @@ const pauseButtons=new WeakMap();
 let modelAt=performance.now();
 let model=null,session=null,queue=Promise.resolve(),offline=false,localPaused=true,lastClock=performance.now(),lastFrame=performance.now(),phase=0,placed=false,lastPanel='',poseTracked=false,capability,lastTerminal=null,sessionMode='ar',vrCapability,showXRProgress=false,xrFeedbackOutcome='Completed',xrFeedbackKey='';
 const personalUI=createPersonalCoachUI({send,confirmSpace,getModel:()=>model});
+let motionCaption=null;
+let orchestrator=null,orchestratorDefinition=null,motionVoicePaused=false;
 let wasLivingVoice=false;let voiceStatus='muted';const voice=createCoachVoice({onStatus:status=>{voiceStatus=status;}});
 let capabilities=trackingCapabilities();
 const progressUI=createProgressUI({send,readState,getModel:()=>model});
+const diagnostics=createMotionDiagnostics({camera,scene,coach,getHuman:()=>human,onEnter:()=>pause(),getCanvas:()=>renderer.domElement});
 document.addEventListener('forma-athlete-updated',()=>readState());
 function wrap(ctx,text,x,y,maxWidth,lineHeight){let cursor=y;for(const paragraph of String(text).split('\n')){let line='';for(const word of paragraph.split(' ')){const test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,cursor);cursor+=lineHeight;line=word;}else line=test;}ctx.fillText(line,x,cursor);cursor+=lineHeight;}return cursor;}
 function paintPanel(){
@@ -53,7 +59,7 @@ function paintPanel(){
  el('session-state').textContent=state?`${l.states[state.state]||l.states.Ready} · ${Math.ceil(state.remaining||0)} s · ${state.completedSets||0}`:l.states.Ready;
  let text=offline?l.offline:!model?l.loading:model.setup.step!=='Complete'?l.setupFirst:(!state&&!model?.personal?.enabled)||state?.state==='Ready'?l.ready:model.coach?.text||l.ready;
  if(model?.personal?.enabled && state?.state==='Work' && !model.personal.catalog?.find(e=>e.id===state.exerciseId)?.animation)text=personalUI.copy().fallback+' '+text;
- const liveInstruction=livingInstruction(model,livingCoach(model,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden}),{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden});if(liveInstruction)text=liveInstruction.text;
+ const liveInstruction=livingInstruction(model,livingCoach(model,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden}),{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden});if(liveInstruction)text=liveInstruction.text;if(motionCaption&&state?.exerciseId==='knees'&&state.state==='Work'&&!offline&&!localPaused)text=motionCaption;
  const signature=JSON.stringify({text,state,setup:model?.setup?.step,language:model?.setup?.profile?.language,session:!!session,offline,space:model?.gate?.space,historyAvailable:model?.historyAvailable,athlete:model?.athlete?.revision,personal:model?.personal?{status:model.personal.status,id:model.personal.recommendation?.id,state:model.personal.session?.state,feedback:model.personal.session?.record?.feedback?.length,save:model.personal.savePending}:null});if(signature===lastPanel)return;lastPanel=signature;
  const c=panel.ctx;c.clearRect(0,0,640,1024);
  c.fillStyle='rgba(7,22,46,.46)';c.beginPath();c.roundRect(4,4,632,1016,24);c.fill();
@@ -94,7 +100,7 @@ function paintPanel(){
  entries.forEach(([id,name,dose],i)=>{const active=model?.personal?.enabled?i===0:id===state?.exerciseId||(id==='summary'&&state?.state==='Completed');t.fillStyle=active?'#79f4ff':'#b8d4ed';t.font='34px sans-serif';t.fillText((model?.personal?.enabled&&i===1?l.next+': ':'')+name,tileWidth*(i+.5),91);t.fillStyle='#afb4aa';t.font='25px sans-serif';t.fillText(dose,tileWidth*(i+.5),139);if(active){t.fillStyle='#79f4ff';t.fillRect(i*tileWidth+30,176,tileWidth-60,5);}});timeline.texture.needsUpdate=true;
  const livingPose=livingCoach(model,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden});
  const instruction=livingInstruction(model,livingPose,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden});
- if(instruction)text=instruction.text;
+ if(instruction)text=instruction.text;if(motionCaption&&state?.exerciseId==='knees'&&state.state==='Work'&&!offline&&!localPaused)text=motionCaption;
  el('coach-cue').textContent=!state||state.state==='Ready'?l.ready:text;
 
  el('workout-title').textContent=!state||state.state==='Ready'?l.headline:living&&state.state==='Introduction'?(l.lang==='tr'?'Karşılama ve güvenlik':'Welcome and safety'):state?.state==='Completed'?l.completed:state?.state==='Aborted'?l.stopped:model?.personal?.enabled?state?.exerciseName||'Bugünkü planın':state?.exerciseId==='march'?'Yerinde yürüyüş':'Omuz çevirme';
@@ -104,6 +110,7 @@ function paintPanel(){
 async function readState(){try{const r=await fetch('/api/state');if(!r.ok)throw new Error();model=await r.json();modelAt=performance.now();offline=false;el('connection-status').textContent=studioCopy(model).connection;paintPanel();}catch{failure();}}
 function failure(){voice.cancel();offline=true;localPaused=true;el('connection-status').textContent=studioCopy(model).offline;paintPanel();}
 function send(action,extra={}){
+ if(action==='coachStart'&&model?.personal?.recommendation?.blocks?.some(b=>b.exercise.id==='knees')&&!human?.animation.motionAvailable){el('personal-plan-error').textContent='Diz hareketi yüklenemedi. Seans başlatılmadı / Knee motion unavailable; session not started.';return Promise.resolve(false);}
  const result=queue.then(async()=>{try{const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Forma-Simulation':'1'},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw new Error();model=data.state;modelAt=performance.now();offline=false;if(model.workout?.state==='Paused')localPaused=true;if((action==='resume'||action==='start'||action==='coachStart'||action==='coachFeedback')&&data.accepted){localPaused=false;lastClock=performance.now();}el('connection-status').textContent=model.notice||studioCopy(model).connection;paintPanel();return data.accepted;}catch{failure();return false;}});
  queue=result.catch(()=>false);return result;
 }
@@ -138,7 +145,7 @@ function place(){const cam=renderer.xr.isPresenting?renderer.xr.getCamera():came
 function resize(){renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/host.clientHeight;camera.fov=camera.aspect<1?53:38;camera.position.set(camera.aspect<1?.9:.8,1.9,camera.aspect<1?3.4:2.4);camera.lookAt(0,1.1,-1.2);camera.updateProjectionMatrix();}window.addEventListener('resize',resize);resize();
 let drag=null;
 let orbitYaw=0;
-renderer.domElement.addEventListener('pointerdown',e=>{if(session)return;drag={x:e.clientX,y:e.clientY,moved:false};renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('pointerdown',e=>{if(session||diagnostics.enabled)return;drag={x:e.clientX,y:e.clientY,moved:false};renderer.domElement.setPointerCapture(e.pointerId);});
 renderer.domElement.addEventListener('pointermove',e=>{
  if(!drag||session)return;const dx=e.clientX-drag.x;if(Math.abs(dx)>2)drag.moved=true;
  if(!drag.moved)return;orbitYaw=Math.max(-.55,Math.min(.55,orbitYaw+dx*.003));drag.x=e.clientX;
@@ -254,23 +261,43 @@ window.addEventListener('keydown',e=>{if(e.code==='Space'&&!document.activeEleme
 document.addEventListener('visibilitychange',()=>{if(!session){if(document.hidden)pause();send('signal',{field:'focus',enabled:!document.hidden});}});
 scene.background=new THREE.Color(environment.background);
 renderer.setAnimationLoop((now,frame)=>{
- const dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
+ const rawDt=Math.max(0,(now-lastFrame)/1000),dt=Math.min(rawDt,.1);lastFrame=now;renderer.info.reset();
  if(session&&frame){const reference=renderer.xr.getReferenceSpace();const tracked=!!reference&&!!frame.getViewerPose(reference);if(tracked!==poseTracked){poseTracked=tracked;if(!tracked)pause();send('signal',{field:'tracking',enabled:tracked});}if(tracked&&!placed)place();for(const source of session.inputSources){const pressed=!!source.gamepad?.buttons[5]?.pressed;if(pressed&&!pauseButtons.get(source))pause();pauseButtons.set(source,pressed);}}
  const feedbackSession=model?.personal?.session;const feedbackIdentity=feedbackSession?.awaitingFeedback?feedbackSession.id+':'+feedbackSession.index:'';if(feedbackIdentity!==xrFeedbackKey){xrFeedbackKey=feedbackIdentity;xrFeedbackOutcome='Completed';worldLabelLanguage='';localizeWorldButtons(studioCopy(model));}
  const awaiting=!!feedbackSession?.awaitingFeedback;for(const b of buttons)b.visible=!!session && (b.userData.feedback?awaiting:!awaiting||b.position.x>=0);
  const motionOptions={offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden,reduced:!!model?.setup?.profile?.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches};
  const qaHold=!!model?.fixtureData&&el('living-qa-hold').checked;
- const livePose=livingCoach(model,motionOptions);if(livePose)host.dataset.intervalElapsed=String(livePose.seconds);if(livePose&&!qaHold&&model?.workout?.isRunning&&!motionOptions.localPaused&&!motionOptions.offline&&motionOptions.visible)livePose.seconds+=Math.min(.3,Math.max(0,(now-modelAt)/1000));
+ let livePose=livingCoach(model,motionOptions);if(livePose)host.dataset.intervalElapsed=String(livePose.seconds);if(livePose&&!qaHold&&model?.workout?.isRunning&&!motionOptions.localPaused&&!motionOptions.offline&&motionOptions.visible)livePose.seconds+=Math.min(.3,Math.max(0,(now-modelAt)/1000));
+ const inspection=diagnostics.update(dt,{developer:!!model?.fixtureData,immersive:!!session});if(inspection)livePose=inspection;
  const pose=coachPresentation(model,{offline,localPaused,visible:session?session.visibilityState==='visible':!document.hidden,reduced:!!model?.setup?.profile?.reducedMotion||matchMedia('(prefers-reduced-motion: reduce)').matches});
  human?.update(pose.phase,pose.moving,pose.exercise,pose.reduced,dt,pose.state,livePose);host.dataset.coachState=livePose?.state||pose.state;host.dataset.animation=human?.animation.state||'loading';
- const instruction=livingInstruction(model,livePose,motionOptions);if(instruction){voice.update(instruction);el('coach-cue').textContent=instruction.text;}else if(wasLivingVoice)voice.cancel();wasLivingVoice=!!instruction;
+ let instruction=inspection?{text:'',language:studioCopy(model).lang,key:'inspection',interrupted:false}:livingInstruction(model,livePose,motionOptions),motionView=null;
+ const knee=livePose?.exercise==='knees'&&!livePose.reduced&&human?.animation.motion;
+ if(knee){
+  if(orchestratorDefinition!==knee.definition){orchestrator=new CoachingOrchestrator(knee.definition);orchestratorDefinition=knee.definition;}
+  const state=livePose.inspection?(livePose.complete?'COMPLETE':livePose.playing?'ACTIVE':'PAUSED'):({idle:'IDLE',welcome:'INTRO',demonstrating:'DEMONSTRATE',exercising:'ACTIVE',resting:'REST',paused:'PAUSED',cooldown:'REST',completed:'COMPLETE'}[livePose.state]||'IDLE');
+  motionView=orchestrator.update({scope:inspection?diagnostics.scope:model.personal.session.id+':'+model.personal.session.index,seconds:livePose.seconds,state,language:studioCopy(model).lang,seek:!!inspection?.seek});
+  if(state==='ACTIVE'||state==='DEMONSTRATE'){
+   instruction={...instruction,text:motionView.caption};if(motionView.cancelVoice)voice.cancel();if(motionView.cue)voice.update(motionView.cue);motionVoicePaused=false;if(!inspection&&motionCaption!==instruction.text){motionCaption=instruction.text;lastPanel='';paintPanel();}
+  }else if(inspection){instruction.text=motionView.caption;if(!motionVoicePaused)voice.cancel();motionVoicePaused=true;}else if(instruction)voice.update(instruction);
+  diagnostics.report({...motionView,eventHistory:orchestrator.events},human.animation);
+ }else{motionCaption=null;if(orchestrator){orchestrator.reset();orchestrator=null;orchestratorDefinition=null;}if(instruction)voice.update(instruction);else if(wasLivingVoice)voice.cancel();}
+ if(instruction)el('coach-cue').textContent=instruction.text;wasLivingVoice=!!instruction;
  capabilities=trackingCapabilities(frame,session,renderer.xr.getReferenceSpace());
  const tr=studioCopy(model).lang==='tr';const stateLabels=tr?{welcome:'Karşılama ve güvenlik',demonstrating:'Önce gösterimi izle',exercising:'Kendi hızında birlikte hareket et',resting:'Dinlen ve nasıl geçtiğini bildir',paused:'Duraklatıldı',cooldown:'Soğuma',completed:'Seans sona erdi'}:{welcome:'Welcome and safety',demonstrating:'Watch the demonstration first',exercising:'Move together at your own pace',resting:'Rest and report how it went',paused:'Paused',cooldown:'Cooldown',completed:'Session ended'};el('living-state').textContent=stateLabels[livePose?.state]||'';el('tracking-capabilities').textContent=tr?`Zamanlı + senin onayın · Baş: ${capabilities.headTracking?'izleniyor':'yok'} · Eller: ${capabilities.leftHandTracking?'sol ':''}${capabilities.rightHandTracking?'sağ':''}${!capabilities.leftHandTracking&&!capabilities.rightHandTracking?'yok':''} · Tam vücut / nabız: yok`:`Timed + user-confirmed · Head: ${capabilities.headTracking?'tracked':'unavailable'} · Hands: ${capabilities.leftHandTracking?'L ':''}${capabilities.rightHandTracking?'R':''}${!capabilities.leftHandTracking&&!capabilities.rightHandTracking?'unavailable':''} · Full body / heart rate: unavailable`;
- const voiceMessages=tr?{muted:'Ses kapalı · Altyazılar açık',unsupported:'Bu tarayıcıda konuşma yok · Altyazıları izle','no-local-voice':'Bu dilde yerel ses yok · Altyazıları izle',blocked:'Ses başlatılamadı · Sesi aç düğmesini yeniden dene',ready:'Yerel ses hazır',speaking:'Koç konuşuyor',requested:'Ses bekleniyor',interrupted:'Ses durduruldu'}:{muted:'Voice muted · Captions on',unsupported:'Speech unavailable · Follow captions','no-local-voice':'No local voice for this language · Follow captions',blocked:'Speech blocked · Try Enable voice again',ready:'Local voice ready',speaking:'Coach speaking',requested:'Speech requested',interrupted:'Speech stopped'};el('voice-status').textContent=voiceMessages[voiceStatus]||'';el('voice-toggle').textContent=voice.enabled?(tr?'Sesi kapat':'Mute voice'):(tr?'Sesi aç':'Enable voice');el('voice-toggle').setAttribute('aria-pressed',String(voice.enabled));el('living-open').textContent=tr?'FORMA START · 5 dk':'FORMA START · 5 min';
+ const voiceMessages=tr?{muted:'Ses kapalı · Altyazılar açık',unsupported:'Bu tarayıcıda konuşma yok · Altyazıları izle','no-local-voice':'Bu dilde yerel ses yok · Altyazıları izle',blocked:'Ses başlatılamadı · Sesi aç düğmesini yeniden dene',ready:'Yerel ses hazır',speaking:'Koç konuşuyor',requested:'Ses bekleniyor',interrupted:'Ses durduruldu'}:{muted:'Voice muted · Captions on',unsupported:'Speech unavailable · Follow captions','no-local-voice':'No local voice for this language · Follow captions',blocked:'Speech blocked · Try Enable voice again',ready:'Local voice ready',speaking:'Coach speaking',requested:'Speech requested',interrupted:'Speech stopped'};el('voice-status').textContent=voiceMessages[voiceStatus]||'';el('voice-toggle').textContent=voice.enabled?(tr?'Sesi kapat':'Mute voice'):(tr?'Sesi aç':'Enable voice');el('voice-toggle').setAttribute('aria-pressed',String(voice.enabled));el('living-open').disabled=!human?.animation.motionAvailable;el('living-open').textContent=tr?'FORMA START · 5 dk':'FORMA START · 5 min';
  holographicStage.userData.setLiving?.(!!livePose);timeline.mesh.visible=!livePose;panel.mesh.visible=!livePose;cue.mesh.visible=!!session;
  if(voiceButtonEnabled!==voice.enabled){voiceButtonEnabled=voice.enabled;worldLabelLanguage='';localizeWorldButtons(studioCopy(model));}
 
- if(now-lastClock>=250){const elapsed=(now-lastClock)/1000;lastClock=now;if(!qaHold&&model?.workout?.isRunning&&!localPaused&&!offline&&(session?session.visibilityState==='visible':!document.hidden)){if(elapsed>1.5)pause();else send('tick',{seconds:elapsed});}}
- if(session)renderer.render(scene,camera);else composer.render(scene,camera);
+ if(now-lastClock>=250){const elapsed=(now-lastClock)/1000;lastClock=now;if(!diagnostics.enabled&&!qaHold&&model?.workout?.isRunning&&!localPaused&&!offline&&(session?session.visibilityState==='visible':!document.hidden)){if(elapsed>1.5)pause();else send('tick',{seconds:elapsed});}}
+ if(session)renderer.render(scene,camera);else composer.render(scene,camera);diagnostics.sample(rawDt*1000,renderer.info.render.calls,renderer.info.render.triangles);
 });
 await readState();if(model?.workout?.isRunning)await pause();await send('signal',{field:'focus',enabled:!document.hidden});capability=await inspectAR(navigator.xr,isSecureContext);vrCapability=await inspectVR(navigator.xr,isSecureContext);el('xr-status').textContent=capability.supported?studioCopy(model).xrAvailable:studioCopy(model).xrUnavailable;el('enter-xr').disabled=!capability.supported||!el('space-confirm').checked;paintPanel();
+
+window.addEventListener('pagehide',event=>{
+ voice.cancel();if(event.persisted)return;
+ diagnostics.dispose();human?.animation.dispose();composer.dispose();
+ const geometries=new Set(),materials=new Set(),textures=new Set(),skeletons=new Set();
+ scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.skeleton)skeletons.add(o.skeleton);for(const material of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});
+ for(const item of geometries)item.dispose();for(const item of materials)item.dispose();for(const item of textures)item.dispose();for(const item of skeletons)item.dispose();renderer.dispose();
+});

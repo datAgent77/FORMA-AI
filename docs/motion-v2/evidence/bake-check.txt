@@ -1,0 +1,5 @@
+(node:49187) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/saita/Documents/Codex/2026-10-31/forma-ai-project-genesis-you-are/outputs/FORMA-AI/tools/WebSimulation/wwwroot/vendor/three/GLTFLoader.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/saita/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Baked standing_alternating_knee_raise: 721 frames, 40 skeletal tracks, 12 seconds, original key-pose source.

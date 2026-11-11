@@ -1,0 +1,450 @@
+{
+  "schemaVersion": 1,
+  "id": "standing_alternating_knee_raise",
+  "displayName": {
+    "en": "Standing alternating knee raise",
+    "tr": "Ayakta s\u0131rayla diz kald\u0131rma"
+  },
+  "source": "FORMA original manually authored whole-body key poses; offline constrained skeletal bake, not motion capture",
+  "license": "LicenseRef-FORMA-Project-Owned",
+  "rigAsset": "/assets/coach/woman-casual.glb",
+  "rigSha256": "99c4df0aaabd19022809facc68f5fb5f564d35df3a9893c273a31fdaacf68e96",
+  "duration": 12,
+  "difficulty": "Beginner",
+  "equipment": [],
+  "targetMuscles": [
+    "hip flexors",
+    "quadriceps",
+    "standing balance"
+  ],
+  "recommendedSeconds": 60,
+  "startingPosition": "Stand upright with feet hip-width apart, soft knees, relaxed shoulders and arms. Move only at a comfortable height.",
+  "safety": "No equipment. Stop for pain, dizziness or unsteadiness. The coach does not measure your form.",
+  "modifications": "Use a smaller knee lift. Skip if unable to balance. This authored standing exercise is not a seated adaptation.",
+  "pauseBehavior": "Freeze exact sampled pose and authoritative workout clock; resume without replaying passed events. On stop blend back to planted neutral.",
+  "completionEvents": [
+    "rep_complete"
+  ],
+  "phases": [
+    {
+      "name": "prepare",
+      "start": 0,
+      "end": 1.4,
+      "side": "right",
+      "contacts": [
+        "left",
+        "right"
+      ]
+    },
+    {
+      "name": "lift",
+      "start": 1.4,
+      "end": 2.8,
+      "side": "right",
+      "contacts": [
+        "left"
+      ]
+    },
+    {
+      "name": "peak",
+      "start": 2.8,
+      "end": 3.3,
+      "side": "right",
+      "contacts": [
+        "left"
+      ]
+    },
+    {
+      "name": "lower",
+      "start": 3.3,
+      "end": 4.8,
+      "side": "right",
+      "contacts": [
+        "left"
+      ]
+    },
+    {
+      "name": "recover",
+      "start": 4.8,
+      "end": 6,
+      "side": "right",
+      "contacts": [
+        "left",
+        "right"
+      ]
+    },
+    {
+      "name": "prepare",
+      "start": 6,
+      "end": 7.4,
+      "side": "left",
+      "contacts": [
+        "left",
+        "right"
+      ]
+    },
+    {
+      "name": "lift",
+      "start": 7.4,
+      "end": 8.8,
+      "side": "left",
+      "contacts": [
+        "right"
+      ]
+    },
+    {
+      "name": "peak",
+      "start": 8.8,
+      "end": 9.3,
+      "side": "left",
+      "contacts": [
+        "right"
+      ]
+    },
+    {
+      "name": "lower",
+      "start": 9.3,
+      "end": 10.8,
+      "side": "left",
+      "contacts": [
+        "right"
+      ]
+    },
+    {
+      "name": "recover",
+      "start": 10.8,
+      "end": 12,
+      "side": "left",
+      "contacts": [
+        "left",
+        "right"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "time": 0,
+      "type": "side_changed",
+      "side": "right"
+    },
+    {
+      "time": 0,
+      "type": "rep_start",
+      "side": "right",
+      "cue": "stand"
+    },
+    {
+      "time": 1.4,
+      "type": "lift",
+      "side": "right",
+      "cue": "right"
+    },
+    {
+      "time": 2.8,
+      "type": "knee_peak",
+      "side": "right"
+    },
+    {
+      "time": 3.3,
+      "type": "lower",
+      "side": "right",
+      "cue": "lower"
+    },
+    {
+      "time": 4.8,
+      "type": "foot_contact",
+      "side": "right"
+    },
+    {
+      "time": 6,
+      "type": "rep_complete",
+      "side": "right"
+    },
+    {
+      "time": 6,
+      "type": "side_changed",
+      "side": "left"
+    },
+    {
+      "time": 6,
+      "type": "rep_start",
+      "side": "left"
+    },
+    {
+      "time": 7.4,
+      "type": "lift",
+      "side": "left",
+      "cue": "left"
+    },
+    {
+      "time": 8.8,
+      "type": "knee_peak",
+      "side": "left"
+    },
+    {
+      "time": 9.3,
+      "type": "lower",
+      "side": "left",
+      "cue": "lower"
+    },
+    {
+      "time": 10.8,
+      "type": "foot_contact",
+      "side": "left"
+    },
+    {
+      "time": 12,
+      "type": "rep_complete",
+      "side": "left"
+    }
+  ],
+  "cues": {
+    "stand": {
+      "en": "Stand tall.",
+      "tr": "Dik dur."
+    },
+    "right": {
+      "en": "Lift your right knee.",
+      "tr": "Sa\u011f dizini kald\u0131r."
+    },
+    "left": {
+      "en": "Now the left.",
+      "tr": "\u015eimdi sol dizin."
+    },
+    "lower": {
+      "en": "And lower.",
+      "tr": "Yava\u015f\u00e7a indir."
+    },
+    "hold": {
+      "en": "Hold comfortably.",
+      "tr": "Rahat\u00e7a bekle."
+    },
+    "recover": {
+      "en": "Return to a balanced stance.",
+      "tr": "Dengeli duru\u015fa d\u00f6n."
+    }
+  },
+  "keyPoses": [
+    {
+      "time": 0,
+      "pelvis": [
+        0,
+        0,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 0,
+      "torso": 0
+    },
+    {
+      "time": 1.4,
+      "pelvis": [
+        0.055,
+        -0.006,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 0.12,
+      "torso": 0.008
+    },
+    {
+      "time": 2.8,
+      "pelvis": [
+        0.06,
+        0.002,
+        -0.006
+      ],
+      "rightFoot": [
+        0,
+        0.23,
+        0.22
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 1,
+      "torso": 0.015
+    },
+    {
+      "time": 3.3,
+      "pelvis": [
+        0.06,
+        0.002,
+        -0.006
+      ],
+      "rightFoot": [
+        0,
+        0.23,
+        0.22
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 1,
+      "torso": 0.015
+    },
+    {
+      "time": 4.8,
+      "pelvis": [
+        0.05,
+        -0.006,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 0.12,
+      "torso": 0.008
+    },
+    {
+      "time": 6,
+      "pelvis": [
+        0,
+        0,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 0,
+      "torso": 0
+    },
+    {
+      "time": 7.4,
+      "pelvis": [
+        -0.055,
+        -0.006,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": -0.12,
+      "torso": -0.008
+    },
+    {
+      "time": 8.8,
+      "pelvis": [
+        -0.06,
+        0.002,
+        -0.006
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0.23,
+        0.22
+      ],
+      "arms": -1,
+      "torso": -0.015
+    },
+    {
+      "time": 9.3,
+      "pelvis": [
+        -0.06,
+        0.002,
+        -0.006
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0.23,
+        0.22
+      ],
+      "arms": -1,
+      "torso": -0.015
+    },
+    {
+      "time": 10.8,
+      "pelvis": [
+        -0.05,
+        -0.006,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": -0.12,
+      "torso": -0.008
+    },
+    {
+      "time": 12,
+      "pelvis": [
+        0,
+        0,
+        0
+      ],
+      "rightFoot": [
+        0,
+        0,
+        0
+      ],
+      "leftFoot": [
+        0,
+        0,
+        0
+      ],
+      "arms": 0,
+      "torso": 0
+    }
+  ],
+  "animationAssetReference": "/assets/motion/standing-alternating-knee-raise.clip.json"
+}

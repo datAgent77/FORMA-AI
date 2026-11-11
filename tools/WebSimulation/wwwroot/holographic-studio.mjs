@@ -75,15 +75,16 @@ export function createHolographicStage(){
 
 // Skinned mesh materials retain the existing rig. Shader lines are visual only.
 export function applyHologram(avatar){
- const meshes=[];avatar.traverse(mesh=>{if(mesh.isMesh)meshes.push(mesh);});
+ const meshes=[],obsoleteMaterials=new Set(),obsoleteGeometries=new Set();avatar.traverse(mesh=>{if(mesh.isMesh)meshes.push(mesh);});
  for(const mesh of meshes){
   // Smooth normals across duplicate positions while retaining skin weights and UVs.
+  obsoleteGeometries.add(mesh.geometry);for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material])obsoleteMaterials.add(material);
   const geometry=mesh.geometry.clone();geometry.computeVertexNormals();
   const positions=geometry.attributes.position,normals=geometry.attributes.normal,sums=new Map();
   const key=i=>`${Math.round(positions.getX(i)*1e7)},${Math.round(positions.getY(i)*1e7)},${Math.round(positions.getZ(i)*1e7)}`;
   for(let i=0;i<positions.count;i++){const k=key(i),v=sums.get(k)||new THREE.Vector3();v.add(new THREE.Vector3(normals.getX(i),normals.getY(i),normals.getZ(i)));sums.set(k,v);}
   for(let i=0;i<positions.count;i++){const v=sums.get(key(i)).clone().normalize();normals.setXYZ(i,v.x,v.y,v.z);}mesh.geometry=geometry;
-  const m=new THREE.MeshPhongMaterial({color:0x1b236a,emissive:0x193d90,emissiveIntensity:.55,specular:0x377da1,shininess:35,transparent:true,opacity:.85,side:THREE.DoubleSide});
+  const m=new THREE.MeshPhongMaterial({color:0x285b91,emissive:0x123862,emissiveIntensity:.35,specular:0x377da1,shininess:35,transparent:true,opacity:.85,side:THREE.DoubleSide});
   m.onBeforeCompile=shader=>{
    shader.vertexShader='varying vec3 vHoloPosition;\n'+shader.vertexShader;
    shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vHoloPosition=(modelMatrix*vec4(transformed,1.0)).xyz;');
@@ -92,12 +93,13 @@ export function applyHologram(avatar){
     float scan=pow(.5+.5*sin(vHoloPosition.y*160.0),24.0);
     float circuit=pow(.5+.5*sin(vHoloPosition.x*78.0+sin(vHoloPosition.y*28.0)*2.0),28.0);
     float rim=pow(1.0-abs(dot(normalize(normal),normalize(vViewPosition))),2.4);
-    gl_FragColor.rgb += vec3(.12,.85,1.0)*(scan*.45+circuit*.38+rim*1.3);
-    gl_FragColor.a=.76+rim*.18+scan*.04;
+    gl_FragColor.rgb += vec3(.12,.85,1.0)*(scan*.15+circuit*.04+rim*.45);
+    gl_FragColor.a=.85+rim*.1+scan*.02;
    `);
   };
   m.customProgramCacheKey=()=> 'forma-hologram-v2';mesh.material=m;
-  const wire=mesh.clone(false);wire.geometry=geometry;wire.material=new THREE.MeshBasicMaterial({color:0x57dfff,wireframe:true,transparent:true,opacity:.045,depthWrite:false,blending:THREE.AdditiveBlending});
+  const wire=mesh.clone(false);wire.geometry=geometry;wire.material=new THREE.MeshBasicMaterial({color:0x57dfff,wireframe:true,transparent:true,opacity:.015,depthWrite:false,blending:THREE.AdditiveBlending});
   if(mesh.isSkinnedMesh)wire.bind(mesh.skeleton,mesh.bindMatrix);wire.name='Holographic rig surface';mesh.parent.add(wire);
  }
+ for(const geometry of obsoleteGeometries)geometry.dispose();for(const material of obsoleteMaterials)material.dispose();
 }

@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three/three.module.js';
+import {loadMotionAsset} from './motion-library.mjs';
 import {createLivingAnimation} from './living-coach-animation.mjs';
 import {GLTFLoader} from './vendor/three/GLTFLoader.js';
 // All room geometry is a desktop-only backdrop. Never drawn over real passthrough.
@@ -48,10 +49,12 @@ export async function createHumanCoach(parent,onStatus){
  avatar.position.y-=sized.min.y;avatar.position.x-=(sized.max.x+sized.min.x)/2;
  avatar.traverse(o=>{if(o.isMesh){o.castShadow=true;o.frustumCulled=false;for(const m of (Array.isArray(o.material)?o.material:[o.material])){m.roughness=.85;if(m.name==='Shirt')m.color.set(0x26343a);if(m.name==='Pants')m.color.set(0x25292d);}}});
  parent.add(avatar);onStatus('3B koç hazır · Geçici stilize model');
- const animation=createLivingAnimation(avatar);
- return {avatar,height:1.75,animation,update(phase,moving,exercise,reduced,dt=.016,presentationState='IDLE',livingPose=null){
+ let motionAsset=null,motionError=null;try{motionAsset=await loadMotionAsset();}catch(error){motionError=error.message;onStatus("Diz hareketi yüklenemedi: "+error.message);}
+ const animation=createLivingAnimation(avatar,{motionAsset});
+ return {avatar,height:1.75,animation,motionError,update(phase,moving,exercise,reduced,dt=.016,presentationState='IDLE',livingPose=null){
   const names={march:'march_loop',shoulders:'shoulder_circles_loop',knees:'knee_raise_loop',mobility:'mobility_loop'};
   const name=livingPose?.animation || (moving&&!reduced?names[exercise]||'idle':presentationState==='CELEBRATING'?'celebrate':presentationState==='GREETING'?'welcome':'rest');
+  if(!animation.actions.has(name)){animation.update('rest',0,dt,false);return;}
   animation.update(name,livingPose?.seconds??phase/Math.PI,dt,!!livingPose?.freeze);
  }};
 }

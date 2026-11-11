@@ -1,0 +1,2 @@
+ISOLATED FIXTURE ONLY: synthetic clock advancement and explicit test feedback; not a human workout.
+PASS: Living Coach full 300-second fixture, feedback, stable athlete/workout identity, single completion and actual progress survive a real host process restart. No physical movement or Quest tracking was tested.

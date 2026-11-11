@@ -1,0 +1,9 @@
+{
+  "health": {
+    "status": "ok",
+    "engine": "shared-csharp",
+    "hardwareValidated": false
+  },
+  "publishedAssetMatchesSource": true,
+  "sha256": "20a70da5875cacfdcc72ccb74a6c54998c475b88b39a6d96f902496b8a26f533"
+}

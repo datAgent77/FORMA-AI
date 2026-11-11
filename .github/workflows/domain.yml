@@ -18,6 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node tools/motion/bake-knee-raise.mjs --check
       - run: bash tools/test-web-simulation.sh
       - run: node tools/test-athlete-restart.mjs
       - run: node tools/test-personal-coach-restart.mjs

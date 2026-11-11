@@ -25,3 +25,4 @@
 #living-hud,#voice-status,#tracking-capabilities{z-index:5}#voice-status{bottom:52px}#tracking-capabilities{bottom:52px}
 @media(max-width:700px){#voice-status{bottom:60px}#tracking-capabilities{bottom:44px}}
 #living-state{color:#91f1ff;font-size:13px;text-align:right;max-width:230px;line-height:1.4}
+#motion-diagnostics{font-size:12px;padding:12px;border:1px solid #64daed88;margin-bottom:16px}#motion-diagnostics label{display:block;margin:10px 0}#motion-diagnostics input[type=range]{width:100%}#motion-diagnostics pre{white-space:pre-wrap;font-size:10px;max-height:200px;overflow:auto}#motion-diagnostics button,#motion-diagnostics select{padding:8px;background:#102b43;color:#ebfcff;border:1px solid #64daed88}#motion-inspection-status,#motion-asset-error{position:absolute;z-index:9;left:25%;right:25%;top:90px;padding:12px;background:#0b1b38e8;border:1px solid #8deeff;color:#ebfcff;font-size:13px}#motion-asset-error{top:135px;border-color:#ffb899}

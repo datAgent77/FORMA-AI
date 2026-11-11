@@ -1,0 +1,2 @@
+Source invariants passed (not compilation).
+Phase 2 dependency boundaries and coach resources passed.
